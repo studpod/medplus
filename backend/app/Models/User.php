@@ -58,4 +58,10 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+   public function patient()
+    {
+        return $this->hasOne(\App\Models\Patient::class, 'user_id');
+    }
+
 }
