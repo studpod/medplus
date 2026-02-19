@@ -13,7 +13,7 @@ class Patient extends Model
         'middle_name',
         'gender',
         'date_of_birth',
-        'phone',    
+        'phone',
     ];
 
     public function user()
@@ -21,4 +21,8 @@ class Patient extends Model
         return $this->belongsTo(\App\Models\User::class, 'user_id');
     }
 
+    public function receptions()
+    {
+        return $this->hasMany(Reception::class);
+    }
 }

@@ -39,13 +39,14 @@ Route::middleware(['auth:api', 'role:patient'])
         // Route::get('/dashboard', [PersonalOfficeController::class, 'dashboard']);
         Route::prefix('view')->group(function () {
              Route::get('/profile',[PersonalOfficeController::class, 'viewProfile']); // api/patient/view/profile
-             Route::get('/medical-records', [PersonalOfficeController::class, 'medicalRecords']); // api/patient/view/medical-records
-             Route::get('/appointments', [PersonalOfficeController::class, 'appointments']); // api/patient/view/appointments
+             Route::get('/medical-records', [PersonalOfficeController::class, 'viewMedicalRecords']); // api/patient/view/medical-records
+             Route::get('/reception', [PersonalOfficeController::class, 'reception']); // api/patient/view/appointments
              Route::get('/lab-results', [PersonalOfficeController::class, 'labResults']); // api/patient/view
+            Route::get('receptions', [PersonalOfficeController::class, 'viewReception']);
         });
         Route::prefix('profile')->group(function(){
             Route::post('/add', [PersonalOfficeController::class, 'addProfile']); // api/patient/profile/add
             Route::put('/update', [PersonalOfficeController::class, 'updateProfile']); // api/patient/profile/update
         });
-        // Route::post('/reception', )
+
     });
