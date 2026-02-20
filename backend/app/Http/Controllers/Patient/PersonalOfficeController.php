@@ -32,8 +32,6 @@ class PersonalOfficeController extends Controller
         ], 200);
     }
 
-
-
     // Додавання особистої інформації
    public function addProfile(Request $request){
 

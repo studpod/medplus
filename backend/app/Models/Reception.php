@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Reception extends Model
 {
+    protected $fillable=[
+        'patient_id',
+        'doctor_id',
+        'reception_type',
+        'date',
+        'time',
+        'status',
+        ];
     public function patient()
     {
         return $this->belongsTo(Patient::class);
