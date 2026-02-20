@@ -15,4 +15,12 @@ class Doctor extends Model
     {
         return $this->belongsTo(Specialization::class);
     }
+    public function schedules()
+    {
+        return $this->hasMany(DoctorSchedules::class);
+    }
+    public function receptions()
+    {
+        return $this->hasMany(Reception::class);
+    }
 }
