@@ -13,10 +13,13 @@ return new class extends Migration
     {
         Schema::create('labs_results', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('medical_record_id')->constrained('medical_records')->onDelete('cascade');
-            $table->foreignId('performed_by')->constrained('doctors')->onDelete('cascade');
+            $table->foreignId('reception_id')->constrained('receptions')->onDelete('cascade');
+            $table->foreignId('performed_by')->constrained('users')->onDelete('cascade');
+            $table->enum('test_type', ['blood', 'urine', 'x-ray', 'ultrasound', 'CT', 'MRI']);
             $table->string('test_name');
             $table->text('result');
+            $table->text('comment');
+            $table->enum('status', ['pending', 'completed']);
             $table->date('performed_at');
             $table->timestamps();
         });

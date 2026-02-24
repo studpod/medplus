@@ -25,4 +25,8 @@ class Patient extends Model
     {
         return $this->hasMany(Reception::class);
     }
+    public function doctor()
+    {
+        return $this->belongsTo(Doctor::class);
+    }
 }

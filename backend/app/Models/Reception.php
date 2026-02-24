@@ -28,4 +28,8 @@ class Reception extends Model
     {
         return $this->hasOne(MedicalRecord::class);
     }
+    public function labResults()
+    {
+        return $this->hasMany(LabResult::class);
+    }
 }

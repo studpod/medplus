@@ -8,10 +8,12 @@ class MedicalRecord extends Model
 {
     protected $fillable = [
         'reception_id',
+        'chief_complaint',
         'diagnosis',
         'treatment',
+        'prescriptions',
+        'notes',
         'start_date',
-        'gender',
         'end_date',
         'status',
     ];

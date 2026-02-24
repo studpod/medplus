@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Doctor;
+namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
-
-class AuthDoctorController extends Controller
+class AuthStaffController extends Controller
 {
     public function login(Request $request)
     {
@@ -26,9 +25,15 @@ class AuthDoctorController extends Controller
 
             $user = auth()->user();
 
-
-            if ($user->role !== 'doctor') {
-                return response()->json(['error' => 'Доступ дозволено тільки лікарям'], 403);
+            // ✅ Дозволяємо тільки мед персонал і адміна
+            if (!in_array($user->role, [
+                'doctor',
+                'lab_technician',
+                'receptionist',
+                'admin'
+            ])) {
+                auth()->logout();
+                return response()->json(['error' => 'Доступ дозволено тільки персоналу'], 403);
             }
 
         } catch (JWTException $e) {
@@ -36,7 +41,7 @@ class AuthDoctorController extends Controller
         }
 
         return response()->json([
-            'message' => 'Вхід лікаря успішний',
+            'message' => 'Вхід персоналу успішний',
             'user' => $user,
             'token' => $token,
         ]);
@@ -50,8 +55,6 @@ class AuthDoctorController extends Controller
     public function logout()
     {
         auth()->logout();
-
         return response()->json(['message' => 'Вихід виконано']);
     }
-
 }

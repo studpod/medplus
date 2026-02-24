@@ -67,4 +67,8 @@ class User extends Authenticatable implements JWTSubject
     {
         $this->notify(new \App\Notifications\ResetPasswordNotification($token));
     }
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class);
+    }
 }

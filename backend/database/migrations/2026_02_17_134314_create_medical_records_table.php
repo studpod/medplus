@@ -14,11 +14,14 @@ return new class extends Migration
         Schema::create('medical_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('reception_id')->constrained('receptions')->onDelete('cascade');
+            $table->string('chief_complant');
             $table->text('diagnosis')->nullable();
             $table->text('treatment')->nullable();
+            $table->string('prescriptions')->nullable();
+            $table->text('notes');
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->enum('status', ['active', 'recovered', 'chronic'])->default('active');
+//            $table->enum('status', ['active', 'recovered', 'chronic'])->default('active');
             $table->timestamps();
         });
     }
