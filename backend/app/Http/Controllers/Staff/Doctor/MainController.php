@@ -55,7 +55,7 @@ class MainController extends Controller
         }
 
         // Витягуємо всі прийоми для лікаря, сортуємо за статусом
-        $receptions = \App\Models\Reception::with('patient') // додаємо інформацію про пацієнта
+        $receptions = \App\Models\Appointment::with('patient') // додаємо інформацію про пацієнта
         ->where('doctor_id', $doctor->id)
             ->orderByRaw("FIELD(status, 'expected', 'completed', 'cancelled')")
             ->orderBy('date', 'asc')

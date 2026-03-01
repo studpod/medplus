@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Staff\Doctor;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Patient, Doctor, Reception, MedicalRecord};
+use App\Models\{Patient, Doctor, Appointment, MedicalRecord};
 use Illuminate\Support\Facades\Auth;
 
 class PatientMedicalController extends Controller
@@ -30,7 +30,7 @@ class PatientMedicalController extends Controller
 
         // Валідація
         $validated = $request->validate([
-            'reception_id'     => 'required|exists:receptions,id',
+            'appointment_id'     => 'required|exists:appointments,id',
             'chief_complaint'  => 'required|string',
             'diagnosis'        => 'required|string',
             'treatment'        => 'required|string',
@@ -49,11 +49,11 @@ class PatientMedicalController extends Controller
         }
 
         // пошук прийому
-        $reception = Reception::where('id', $validated['reception_id'])
+        $appointment = Appointment::where('id', $validated['appointment_id'])
             ->where('patient_id', $patient->id)
             ->first();
 
-        if (!$reception) {
+        if (!$appointment) {
             return response()->json([
                 'error' => 'Прийом не знайдено для цього пацієнта'
             ], 404);
@@ -69,7 +69,7 @@ class PatientMedicalController extends Controller
             }
         } else {
             // Спеціаліст може додавати записи тільки якщо він прив'язаний до цього прийому
-            if ($reception->doctor_id !== $doctor->id) {
+            if ($appointment->doctor_id !== $doctor->id) {
                 return response()->json([
                     'error' => 'Ви не можете додавати записи до цього прийому'
                 ], 403);
@@ -78,7 +78,7 @@ class PatientMedicalController extends Controller
 
 
         $medicalRecord = MedicalRecord::create([
-            'reception_id'     => $reception->id,
+            'appointment_id'     => $appointment->id,
             'chief_complaint'  => $validated['chief_complaint'],
             'diagnosis'        => $validated['diagnosis'],
             'treatment'        => $validated['treatment'],

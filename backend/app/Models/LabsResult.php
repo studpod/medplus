@@ -16,8 +16,8 @@ class LabsResult extends Model
             'status',
             'performed_at'
     ];
-    public function reception()
+    public function appointment()
     {
-        return $this->belongsTo(Reception::class);
+        return $this->belongsTo(Appointment::class);
     }
 }

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Models\{Reception, Patient, User, Doctor, DoctorSchedules};
+use App\Models\{Appointment, Patient, User, Doctor, DoctorSchedules};
 
 
 
@@ -30,7 +30,7 @@ class ReceptionController extends Controller
 
         $dayOfWeek = Carbon::parse($validated['date'])->format('l');
 
-        // ✅ Перевірка графіка лікаря
+        // Перевірка графіка лікаря
         $scheduleExists = $doctor->schedules()
             ->where('day_of_week', $dayOfWeek)
             ->where('start_time', '<=', $validated['time'])
@@ -43,8 +43,8 @@ class ReceptionController extends Controller
             ], 422);
         }
 
-        // ✅ Перевірка зайнятості часу
-        $slotBusy = Reception::where('doctor_id', $doctor->id)
+        // Перевірка зайнятості часу
+        $slotBusy = Appointment::where('doctor_id', $doctor->id)
             ->where('date', $validated['date'])
             ->where('time', $validated['time'])
             ->exists();
@@ -55,7 +55,7 @@ class ReceptionController extends Controller
             ], 422);
         }
 
-        $reception = Reception::create([
+        $reception = Appointment::create([
             'patient_id' => $patient->id,
             'doctor_id'  => $doctor->id,
             'date'       => $validated['date'],

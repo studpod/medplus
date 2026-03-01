@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Staff\Laborant;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{User, Reception, Doctor, LabsResult};
+use App\Models\{User, Appointment, Doctor, LabsResult};
 
 class MainLabController extends Controller
 {
@@ -19,7 +19,7 @@ class MainLabController extends Controller
             ], 404);
         }
 
-        $receptions = Reception::with('patient')
+        $receptions = Appointment::with('patient')
             ->where('doctor_id', $staff->id)
             ->whereIn('status', ['expected', 'cancelled'])
             ->orderByRaw("CASE WHEN status = 'expected' THEN 0 WHEN status = 'cancelled' THEN 1 END")

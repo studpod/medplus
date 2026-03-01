@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Staff\Receptionist;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Patient, Reception, Doctor , Specialization, DoctorSchedules};
+use App\Models\{Patient, Appointment, Doctor , Specialization, DoctorSchedules};
 
 class MainReceptionistController extends Controller
 {
@@ -18,7 +18,7 @@ class MainReceptionistController extends Controller
     public function viewReception()
     {
         // Отримуємо всі прийоми з пацієнтами та лікарями
-        $receptions = Reception::with(['patient', 'doctor'])->orderBy('date', 'asc')->orderBy('time', 'asc')->get();
+        $receptions = Appointment::with(['patient', 'doctor'])->orderBy('date', 'asc')->orderBy('time', 'asc')->get();
 
         $data = $receptions->map(function($reception) {
             return [
@@ -119,7 +119,7 @@ class MainReceptionistController extends Controller
         ]);
 
         // Перевірка зайнятого часу
-        $exists = Reception::where('doctor_id', $validated['doctor_id'])
+        $exists = Appointment::where('doctor_id', $validated['doctor_id'])
             ->where('date', $validated['date'])
             ->where('time', $validated['time'])
             ->exists();
@@ -130,7 +130,7 @@ class MainReceptionistController extends Controller
             ], 422);
         }
 
-        $reception = Reception::create([
+        $reception = Appointment::create([
             'patient_id' => $validated['patient_id'],
             'doctor_id'  => $validated['doctor_id'],
             'date'       => $validated['date'],

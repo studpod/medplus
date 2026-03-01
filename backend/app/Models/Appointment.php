@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Reception extends Model
+class Appointment extends Model
 {
     protected $fillable=[
         'patient_id',
