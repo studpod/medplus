@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('labs_results', function (Blueprint $table) {
+        Schema::create('labs_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('appointment_id')->constrained('appointments')->onDelete('cascade');
-            $table->integer('lab_id')->unsigned();
+            $table->foreignId('lab_id')->constrained('labs_results');
+            $table->string('file_path');
+            $table->string('file_type');
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('labs_results');
+        Schema::dropIfExists('labs_files');
     }
 };

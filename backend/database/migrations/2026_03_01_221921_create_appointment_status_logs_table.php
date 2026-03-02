@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('labs_results', function (Blueprint $table) {
+        Schema::create('appointment_status_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('appointment_id')->constrained('appointments')->onDelete('cascade');
-            $table->integer('lab_id')->unsigned();
+            $table->string('old_status')->nullable();
+            $table->string('new_status');
+            $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('labs_results');
+        Schema::dropIfExists('appointment_status_logs');
     }
 };

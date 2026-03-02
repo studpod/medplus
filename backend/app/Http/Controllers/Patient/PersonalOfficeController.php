@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\RoleMiddleware;
-use App\Models\{Patient, User, MedicalRecord, Reception};
+use App\Models\{Patient, User, MedicalRecord, Appointment};
 
 class PersonalOfficeController extends Controller
 {

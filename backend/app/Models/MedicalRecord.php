@@ -7,17 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 class MedicalRecord extends Model
 {
     protected $fillable = [
-        'reception_id',
+        'appointment_id',
+        'chief_complaint',
         'diagnosis',
         'treatment',
+        'prescriptions',
+        'notes',
         'start_date',
-        'gender',
         'end_date',
         'status',
     ];
-    public function reception()
+    public function appointment()
     {
-        return $this->belongsTo(Reception::class);
+        return $this->belongsTo(Appointment::class);
     }
     public function labsResults()
     {
