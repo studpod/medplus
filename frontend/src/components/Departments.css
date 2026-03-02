@@ -1,0 +1,37 @@
+.departments {
+    margin: 40px 60px;
+}
+
+.departments h2 {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 25px;
+    color: #1e293b;
+}
+
+.dept-cards {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.dept-card {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    width: 200px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    transition: all 0.3s;
+}
+
+.dept-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.dept-icon {
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
