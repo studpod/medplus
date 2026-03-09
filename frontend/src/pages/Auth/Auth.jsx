@@ -1,10 +1,15 @@
 import { useState } from "react";
-import API from "../../api";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../../firebase";
+import {
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    sendEmailVerification
+} from "firebase/auth";
 import "./Auth.scss";
 
 export default function Auth({ setUser }) {
-    const [activeTab, setActiveTab] = useState("login"); // login / register
+    const [activeTab, setActiveTab] = useState("login");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -16,32 +21,73 @@ export default function Auth({ setUser }) {
         setError("");
 
         try {
-            let res;
+            let userCredential;
+            let firebaseUser;
 
-            if (activeTab === "login") {
-                // логін
-                res = await API.post("auth/login", { email, password });
-            } else {
-                // реєстрація
-                res = await API.post("auth/register", {
-                    email,
-                    password,
-                    password_confirmation: passwordConfirm,
-                });
+            if (activeTab === "register") {
+                if (password !== passwordConfirm) {
+                    setError("Паролі не співпадають");
+                    return;
+                }
+
+
+                userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                firebaseUser = userCredential.user;
+
+                await sendEmailVerification(firebaseUser);
+                alert("На вашу пошту надіслано лист для підтвердження!");
+
+
+                const userData = { uid: firebaseUser.uid, email: firebaseUser.email };
+                localStorage.setItem("user", JSON.stringify(userData));
+                setUser(userData);
+
+
+                navigate("/verify-email");
+                return;
             }
 
-            // зберігаємо токен та user
-            localStorage.setItem("token", res.data.token);
-            localStorage.setItem("user", JSON.stringify(res.data.user));
+            if (activeTab === "login") {
 
-            // оновлюємо глобальний user state
-            setUser(res.data.user);
+                userCredential = await signInWithEmailAndPassword(auth, email, password);
+                firebaseUser = userCredential.user;
+                console.log("Email verified:", firebaseUser.emailVerified);
 
-            // редірект на головну
-            navigate("/");
+
+                if (!firebaseUser.emailVerified) {
+
+                }
+
+
+                const idToken = await firebaseUser.getIdToken();
+
+
+                const syncResponse = await fetch("http://localhost:8000/api/auth/sync", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                    }),
+                });
+
+                if (!syncResponse.ok) throw new Error("Sync error");
+
+                const userFromBackend = await syncResponse.json();
+
+
+                localStorage.setItem("user", JSON.stringify(userFromBackend));
+                localStorage.setItem("token", idToken);
+                setUser(userFromBackend);
+
+                navigate("/");
+            }
+
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.error || "Помилка сервера");
+            setError(err.message || "Помилка сервера");
         }
     };
 
@@ -53,12 +99,14 @@ export default function Auth({ setUser }) {
                     <button
                         className={activeTab === "login" ? "active" : ""}
                         onClick={() => setActiveTab("login")}
+                        type="button"
                     >
                         Авторизація
                     </button>
                     <button
                         className={activeTab === "register" ? "active" : ""}
                         onClick={() => setActiveTab("register")}
+                        type="button"
                     >
                         Реєстрація
                     </button>

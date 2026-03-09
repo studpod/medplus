@@ -1,14 +1,13 @@
-import Header from "../components/Header/Header";
 import "./Home.scss";
 
 export default function Home({ user }) {
     return (
         <>
 
-            <h1>Головна сторінка</h1>
+            {/*<h1>Головна сторінка</h1>*/}
 
-            {/* Тимчасовий індикатор авторизації */}
-            {user && <p>Ви увійшли як: {user.email}</p>}
+            {/*/!* Тимчасовий індикатор авторизації *!/*/}
+            {/*{user && <p>Ви увійшли як: {user.email}</p>}*/}
 
             <main className="home">
 
@@ -33,7 +32,7 @@ export default function Home({ user }) {
                     </div>
                 </section>
 
-                {/* ABOUT SECTION (новий сучасний варіант) */}
+                {/* ABOUT SECTION */}
                 <section className="about">
                     <div className="container about__content">
 

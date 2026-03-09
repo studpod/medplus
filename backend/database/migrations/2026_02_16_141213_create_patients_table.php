@@ -19,8 +19,10 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('middle_name');
             $table->enum('gender', ['male', 'female']);
+            $table->string('address');
             $table->date('date_of_birth');
             $table->string('phone');
+            $table->string('notes')->nullable();
             $table->timestamps();
         });
     }

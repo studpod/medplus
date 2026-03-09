@@ -7,17 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class LabsResult extends Model
 {
     protected $fillable = [
-         'reception_id' ,
-            'performed_by',
-            'test_type',
-            'test_name',
-            'result',
-            'comment',
-            'status',
-            'performed_at'
+         'appointment_id' ,
+        'lab_id',
+
     ];
-    public function appointment()
+    public function appointmentService()
     {
-        return $this->belongsTo(Appointment::class);
+        return $this->belongsTo(AppointmentService::class);
+    }
+    public function labsFiles()
+    {
+        return $this->hasMany(LabsFile::class, 'lab_id', 'id'); // lab_id у files = id у results
     }
 }

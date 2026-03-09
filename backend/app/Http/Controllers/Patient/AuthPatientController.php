@@ -163,6 +163,9 @@ class AuthPatientController extends Controller
 
         return response()->json(['message' => 'Пароль успішно змінено']);
     }
+
+
+
 }
 
 

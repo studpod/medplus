@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('appointment_id')->constrained('appointments')->onDelete('cascade');
             $table->string('chief_complaint');
+            $table->string('anamnesis');
+            $table->string('initial_review')->nullable();
             $table->text('diagnosis')->nullable();
             $table->text('treatment')->nullable();
             $table->string('prescriptions')->nullable();

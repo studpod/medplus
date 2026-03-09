@@ -1,35 +1,63 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route , Navigate} from "react-router-dom";
 import Home from "./pages/Home";
 import Header from "./components/Header/Header";
-import "./styles/global.scss";
 import Auth from "./pages/Auth/Auth";
+import Cabinet from  "./pages/Cabinet/Cabinet"
+import ReceptionPage from "./pages/Appointment/AppointmentPage";
+import "./styles/global.scss";
 import { useState, useEffect } from "react";
+import { auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import API from "../src/api";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
-    const [user, setUser] = useState(() => {
-        // Початково user можна спробувати взяти з localStorage (якщо ти зберігав його)
-        const storedUser = localStorage.getItem("user");
-        return storedUser ? JSON.parse(storedUser) : null;
-    });
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchUser = async () => {
-            const token = localStorage.getItem("token");
-            if (token) {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
                 try {
-                    const res = await API.get("/auth/me");
-                    setUser(res.data.user);
-                    localStorage.setItem("user", JSON.stringify(res.data.user)); // зберігаємо user
+                    const token = await firebaseUser.getIdToken();
+                    const res = await fetch("http://localhost:8000/api/auth/sync", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            uid: firebaseUser.uid,
+                            email: firebaseUser.email,
+                        }),
+                    });
+
+                    if (res.ok) {
+                        const userFromBackend = await res.json();
+                        setUser(userFromBackend);
+                        localStorage.setItem("user", JSON.stringify(userFromBackend));
+                        localStorage.setItem("token", token);
+                    } else {
+                        setUser(null);
+                        localStorage.removeItem("user");
+                        localStorage.removeItem("token");
+                    }
                 } catch (err) {
-                    console.log("Не вдалось отримати користувача");
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("user");
+                    console.error("Помилка синхронізації:", err);
                     setUser(null);
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("token");
                 }
+            } else {
+                setUser(null);
+                localStorage.removeItem("user");
+                localStorage.removeItem("token");
             }
-        };
-        fetchUser();
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, []);
 
     const handleLogout = async () => {
@@ -38,10 +66,12 @@ function App() {
         } catch (err) {
             console.log(err);
         }
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
         setUser(null);
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
     };
+
+    if (loading) return null;
 
     return (
         <Router>
@@ -49,7 +79,20 @@ function App() {
             <Routes>
                 <Route path="/" element={<Home user={user} />} />
                 <Route path="/auth" element={<Auth setUser={setUser} />} />
+                <Route path="/cabinet" element={user ? <Cabinet user={user} /> : <Navigate to="/auth" />} />
+                <Route path="/reception" element={user ? <ReceptionPage /> : <Navigate to="/auth" />} />
             </Routes>
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={true}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+            />
         </Router>
     );
 }

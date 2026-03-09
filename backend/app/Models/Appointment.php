@@ -28,8 +28,9 @@ class Appointment extends Model
     {
         return $this->hasOne(MedicalRecord::class);
     }
-    public function labResults()
+
+    public function appointmentServices()
     {
-        return $this->hasMany(LabResult::class);
+        return $this->hasMany(AppointmentService::class);
     }
 }

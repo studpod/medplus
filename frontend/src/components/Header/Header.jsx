@@ -1,12 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import "./Header.scss";
+import logo from "../../assets/logo.png";
 
 export default function Header({ user, onLogout }) {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        onLogout?.(); // викликаємо функцію logout з App.js
-        navigate("/"); // після logout редірект на сторінку авторизації
+        onLogout?.();
+        navigate("/");
     };
 
     return (
@@ -14,8 +15,8 @@ export default function Header({ user, onLogout }) {
             <div className="container header__content">
 
                 {/* Логотип */}
-                <div className="header__logo">
-                    MedPlus
+                <div className="header__logo" onClick={() => navigate("/")}>
+                    <img src={logo} alt="MedPlus" className="header__logo-img" />
                 </div>
 
                 {/* Навігація */}
@@ -31,7 +32,7 @@ export default function Header({ user, onLogout }) {
                 <div className="header__auth">
                     {user ? (
                         <>
-                            <Link to="/profile" className="header__cabinet-btn">
+                            <Link to="/cabinet" className="header__cabinet-btn">
                                 Кабінет
                             </Link>
                             <button onClick={handleLogout} className="header__logout-btn">

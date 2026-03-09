@@ -5,25 +5,31 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Models\{Appointment, Patient, User, Doctor, DoctorSchedules};
+use App\Models\{Appointment, Patient, User, Doctor, DoctorSchedules, AppointmentService, Service};
 
 
 
 class ReceptionController extends Controller
 {
+
     public function addReception(Request $request)
     {
         $user = auth()->user();
-
         $patient = $user->patient;
+
         if (!$patient) {
-            return response()->json(['error' => 'Профіль пацієнта не знайдено'], 404);
+            return response()->json([
+                'error' => 'Профіль пацієнта не знайдено'
+            ], 404);
         }
 
+        // Валідація даних
         $validated = $request->validate([
-            'doctor_id' => 'required|exists:doctors,id',
-            'date'      => 'required|date|after_or_equal:today',
-            'time'      => 'required|date_format:H:i',
+            'doctor_id'    => 'required|exists:doctors,id',
+            'service_ids'  => 'required|array|min:1',
+            'service_ids.*'=> 'exists:services,id',
+            'date'         => 'required|date|after_or_equal:today',
+            'time'         => 'required|date_format:H:i',
         ]);
 
         $doctor = Doctor::with('schedules')->findOrFail($validated['doctor_id']);
@@ -55,7 +61,8 @@ class ReceptionController extends Controller
             ], 422);
         }
 
-        $reception = Appointment::create([
+        // Створюємо запис
+        $appointment = Appointment::create([
             'patient_id' => $patient->id,
             'doctor_id'  => $doctor->id,
             'date'       => $validated['date'],
@@ -63,9 +70,19 @@ class ReceptionController extends Controller
             'status'     => 'expected',
         ]);
 
+        // Додаємо всі обрані послуги
+        foreach ($validated['service_ids'] as $serviceId) {
+            $service = Service::findOrFail($serviceId);
+            AppointmentService::create([
+                'appointment_id' => $appointment->id,
+                'service_id'     => $service->id,
+                'price'          => $service->price,
+            ]);
+        }
+
         return response()->json([
-            'message'   => 'Запис на прийом успішно додано',
-            'reception' => $reception
+            'message' => 'Запис на прийом успішно створено',
+            'appointment' => $appointment
         ], 201);
     }
 }

@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\FirebaseAuth;
 use App\Http\Controllers\Patient\AuthPatientController;
 use App\Http\Controllers\Patient\PersonalOfficeController;
 use App\Http\Controllers\Patient\ReceptionController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Staff\Doctor\{MainController, PatientMedicalController}
 use App\Http\Controllers\Staff\Laborant\{MainLabController};
 use App\Http\Controllers\Staff\Receptionist\MainReceptionistController;
 use App\Http\Controllers\PublicViewController;
+use App\Models\User;
 
 
 
@@ -18,22 +20,54 @@ Route::middleware(['auth:'])->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix' => 'public/view'], function () {
-   Route::get('/services', [PublicViewController::class, 'services']);
+    Route::prefix('/services')->group(function () {
+        Route::get('', [PublicViewController::class, 'services']);
+        Route::get('/{specializationId}', [PublicViewController::class, 'getBySpecialization']);
+    });
+   Route::prefix('/doctors')->group(function () {
+       Route::get('/list', [PublicViewController::class, 'doctorList']);
+       Route::get('/specialization/{id}', [PublicViewController::class, 'getByDoctorsSpecialization']);
+       Route::get('/{doctor}/available-times', [PublicViewController::class, 'availableTimes']);
+   });
+   Route::get('/specializations', [PublicViewController::class, 'specializations']);
+
 });
 
-Route::group(['prefix' => 'auth'], function () {
-    Route::post('/register', [AuthPatientController::class, 'register']); // api/auth/register
-    Route::get('/verify-email', [AuthPatientController::class, 'verifyEmail']);
-    Route::post('/login', [AuthPatientController::class, 'login']); // api/auth/login
+//Route::group(['prefix' => 'auth'], function () {
+//    Route::post('/register', [AuthPatientController::class, 'register']); // api/auth/register
+//    Route::get('/verify-email', [AuthPatientController::class, 'verifyEmail']);
+//    Route::post('/login', [AuthPatientController::class, 'login']); // api/auth/login
+//
+//    Route::post('/forgot-password', [AuthPatientController::class, 'forgotPassword']);
+//    Route::post('/reset-password', [AuthPatientController::class, 'resetPassword']);
+//
+//    Route::middleware('auth:api')->group(function () {
+//        Route::get('/me', [AuthPatientController::class, 'me']); // api/auth/me
+//        Route::post('/logout', [AuthPatientController::class, 'logout']); // api/auth/logout
+//        Route::post('/change-password', [AuthPatientController::class, 'changePassword']);
+//    });
+//});
 
-    Route::post('/forgot-password', [AuthPatientController::class, 'forgotPassword']);
-    Route::post('/reset-password', [AuthPatientController::class, 'resetPassword']);
+Route::prefix('auth')->group(function () {
 
-    Route::middleware('auth:api')->group(function () {
-        Route::get('/me', [AuthPatientController::class, 'me']); // api/auth/me
-        Route::post('/logout', [AuthPatientController::class, 'logout']); // api/auth/logout
-        Route::post('/change-password', [AuthPatientController::class, 'changePassword']);
+    Route::post('/sync', function(Request $request) {
+        $firebaseUser = $request->all(); // uid/email з React
+
+        if (!isset($firebaseUser['uid']) || !isset($firebaseUser['email'])) {
+            return response()->json(['error' => 'No Firebase user data provided'], 400);
+        }
+
+        $user = User::firstOrCreate(
+            ['firebase_uid' => $firebaseUser['uid']],
+            [
+                'email' => $firebaseUser['email'],
+                'role' => 'patient',
+            ]
+        );
+
+        return response()->json($user);
     });
+
 });
 
 Route::group(['prefix' => 'staff/auth'], function () {
@@ -45,7 +79,7 @@ Route::group(['prefix' => 'staff/auth'], function () {
     });
 });
 
-Route::middleware(['auth:api', 'role:patient'])
+Route::middleware([FirebaseAuth::class, 'role:patient'])
     ->prefix('patient')
     ->group(function () {
 
