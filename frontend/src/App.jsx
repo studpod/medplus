@@ -1,20 +1,50 @@
-import { BrowserRouter as Router, Routes, Route , Navigate} from "react-router-dom";
-import Home from "./pages/Home";
-import Header from "./components/Header/Header";
-import Auth from "./pages/Auth/Auth";
-import Cabinet from  "./pages/Cabinet/Cabinet"
-import ReceptionPage from "./pages/Appointment/AppointmentPage";
-import "./styles/global.scss";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import API from "../src/api";
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
+import Home from "./pages/Home";
+import Header from "./components/Header/Header";
+import Auth from "./pages/Auth/Auth";
+import Cabinet from "./pages/Cabinet/Cabinet";
+import ReceptionPage from "./pages/Appointment/AppointmentPage";
+
+
+import StaffLogin from "./Staff/pages/StaffLogin";
+import StaffDashboard from "./Staff/pages/StaffDashboard";
+import StaffLayout from "./Staff/components/StaffLayout";
+import PatientMedicalCard from "./Staff/components/PatientMedCard/PatientMedicalCard";
+import PatientsPage from "./Staff/pages/PatientsPage";
+import AppointmentsPage from "./Staff/pages/AppointmentsPage";
+
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "./styles/global.scss";
+
+function AppWrapper() {
+    return (
+        <Router>
+            <App />
+        </Router>
+    );
+}
 
 function App() {
+    const location = useLocation();
+
+    // Пацієнти
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // Медперсонал
+    const [staffUser, setStaffUser] = useState(
+        JSON.parse(localStorage.getItem("staff_user"))
+    );
+
+
+    const showHeader = !location.pathname.startsWith("/staff");
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -32,7 +62,6 @@ function App() {
                             email: firebaseUser.email,
                         }),
                     });
-
                     if (res.ok) {
                         const userFromBackend = await res.json();
                         setUser(userFromBackend);
@@ -60,6 +89,15 @@ function App() {
         return () => unsubscribe();
     }, []);
 
+
+    useEffect(() => {
+        if (user && auth.currentUser) {
+            auth.currentUser.getIdToken().then(token => {
+                console.log("Firebase token:", token);
+            });
+        }
+    }, [user]);
+
     const handleLogout = async () => {
         try {
             await API.post("/auth/logout");
@@ -74,27 +112,74 @@ function App() {
     if (loading) return null;
 
     return (
-        <Router>
-            <Header user={user} onLogout={handleLogout} />
+        <>
+            {showHeader && <Header user={user} onLogout={handleLogout} />}
+
+
+            {/*{user && (*/}
+            {/*    <div style={{ padding: "10px", background: "#f1f1f1" }}>*/}
+            {/*        <button*/}
+            {/*            onClick={async () => {*/}
+            {/*                if (auth.currentUser) {*/}
+            {/*                    const token = await auth.currentUser.getIdToken();*/}
+            {/*                    console.log("Firebase token:", token);*/}
+            {/*                    alert("Токен скопійовано в консоль!");*/}
+            {/*                } else {*/}
+            {/*                    alert("Користувач не залогінений");*/}
+            {/*                }*/}
+            {/*            }}*/}
+            {/*        >*/}
+            {/*            Отримати Firebase токен*/}
+            {/*        </button>*/}
+            {/*    </div>*/}
+            {/*)}*/}
+
             <Routes>
+                {/* Пацієнти */}
                 <Route path="/" element={<Home user={user} />} />
                 <Route path="/auth" element={<Auth setUser={setUser} />} />
-                <Route path="/cabinet" element={user ? <Cabinet user={user} /> : <Navigate to="/auth" />} />
-                <Route path="/reception" element={user ? <ReceptionPage /> : <Navigate to="/auth" />} />
+                <Route
+                    path="/cabinet"
+                    element={user ? <Cabinet user={user} /> : <Navigate to="/auth" />}
+                />
+                <Route
+                    path="/reception"
+                    element={user ? <ReceptionPage /> : <Navigate to="/auth" />}
+                />
+
+                {/* STAFF */}
+                <Route
+                    path="/staff/login"
+                    element={<StaffLogin setUser={setStaffUser} />}
+                />
+                <Route
+                    path="/staff"
+                    element={
+                        staffUser
+                            ? <StaffLayout user={staffUser} setUser={setStaffUser} />
+                            : <Navigate to="/staff/login" />
+                    }
+                >
+                    <Route index element={<StaffDashboard />} />
+                    <Route path="appointments" element={<AppointmentsPage />} />
+                    <Route path="patients" element={<PatientsPage />} />
+                    <Route path="patient/:patientId/medical-card"
+                        element={<PatientMedicalCard />}
+                    />
+                </Route>
             </Routes>
+
             <ToastContainer
                 position="top-right"
                 autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop={true}
+                newestOnTop
                 closeOnClick
-                rtl={false}
                 pauseOnFocusLoss
                 draggable
                 pauseOnHover
             />
-        </Router>
+        </>
     );
 }
 
-export default App;
+export default AppWrapper;

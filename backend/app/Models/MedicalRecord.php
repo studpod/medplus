@@ -9,6 +9,8 @@ class MedicalRecord extends Model
     protected $fillable = [
         'appointment_id',
         'chief_complaint',
+        'anamnesis',
+        'initial_review',
         'diagnosis',
         'treatment',
         'prescriptions',
@@ -21,8 +23,17 @@ class MedicalRecord extends Model
     {
         return $this->belongsTo(Appointment::class);
     }
+    // Отримати всі лабораторні результати через Appointment → AppointmentService → LabsResult
     public function labsResults()
     {
-        return $this->hasMany(LabsResult::class);
+        return $this->hasManyThrough(
+            LabsResult::class,         // кінцева модель
+            AppointmentService::class, // проміжна модель
+            'appointment_id',          // ключ у appointment_services, що зв'язує з appointment
+            'appointment_service_id',  // ключ у labs_results, що зв'язує з appointment_service
+            'appointment_id',          // локальний ключ у medical_records → appointment
+            'id'                       // локальний ключ у appointment_services
+        )->with('labsFiles'); // відразу підвантажуємо файли
     }
+
 }

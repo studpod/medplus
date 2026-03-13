@@ -1,11 +1,52 @@
-import { useState } from "react";
-import "./MedicalRecordsSection.scss";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import API from "../../../api";
+import "../../../components/Cabinet/MedicalRecordsSection.scss";
+import AddMedicalRecordModal from "./AddMedicalRecordModal";
 
-export default function MedicalRecordsSection({ records }) {
+export default function PatientMedicalCard() {
+    const { patientId } = useParams();
 
-    const [open, setOpen] = useState(false);
+
+    const [patient, setPatient] = useState(() => {
+        const cached = localStorage.getItem(`medical_card_${patientId}`);
+        return cached ? JSON.parse(cached).patient : null;
+    });
+    const [records, setRecords] = useState(() => {
+        const cached = localStorage.getItem(`medical_card_${patientId}`);
+        return cached ? JSON.parse(cached).records : [];
+    });
+
+    const [open, setOpen] = useState(true);
     const [expandedRecords, setExpandedRecords] = useState([]);
     const [expandedLabs, setExpandedLabs] = useState([]);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [editingRecord, setEditingRecord] = useState(null);
+
+
+    useEffect(() => {
+        const fetchMedicalCard = async () => {
+            try {
+                const res = await API.get(`/doctor/view/patient/${patientId}/medical-card`);
+                setPatient(res.data.patient);
+                setRecords(res.data.medical_records);
+                    console.log("Med card", res.data.medical_records)
+                // --- Зберігаємо у кеш localStorage ---
+                localStorage.setItem(
+                    `medical_card_${patientId}`,
+                    JSON.stringify({
+                        timestamp: Date.now(),
+                        patient: res.data.patient,
+                        records: res.data.medical_records,
+                    })
+                );
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchMedicalCard();
+    }, [patientId]);
 
     const toggleRecord = (id) => {
         setExpandedRecords((prev) =>
@@ -19,90 +60,113 @@ export default function MedicalRecordsSection({ records }) {
         );
     };
 
+    if (!patient) return <div>Пацієнт не знайдений</div>;
+
     return (
         <div className="accordion-card">
+            {/* --- Блок інформації про пацієнта --- */}
+            <div className="patient-info-block">
+                <h2>Інформація про пацієнта</h2>
+                <div className="patient-meta">
+          <span>
+            <b>Пацієнт:</b> {patient.last_name} {patient.first_name} {patient.middle_name}
+          </span>
+                    <span><b>Дата народження:</b> {patient.date_of_birth}</span>
+                    <span><b>Телефон:</b> {patient.phone}</span>
+                    <span><b>Email:</b> {patient.email}</span>
+                    <span><b>Адреса проживання:</b>{patient.address}</span>
+                    <span><b>Нотатки до пацієнта:</b>{patient.notes}</span>
+                </div>
+            </div>
 
-            {/* HEADER */}
-            <div className="accordion-header" onClick={() => setOpen(!open)}>
-
+            {/* --- Акордеон з медичною карткою --- */}
+            <div className="accordion-header">
                 <div>
                     <h3>Амбулаторна медична картка</h3>
-
                     <p className="records-count">
-                        {records.length > 0
-                            ? `Записів: ${records.length}`
-                            : "Записів поки немає"}
+                        {records.length > 0 ? `Записів: ${records.length}` : "Записів поки немає"}
                     </p>
                 </div>
 
-                <span className="arrow">{open ? "−" : "+"}</span>
+                <div className="header-actions">
 
+                    <button
+                        className="add-record-btn"
+                        onClick={() => setShowAddModal(true)}
+                    >
+                        ➕ Додати запис
+                    </button>
+
+                    <span
+                        className="arrow"
+                        onClick={() => setOpen(!open)}
+                    >
+            {open ? "−" : "+"}
+        </span>
+
+                </div>
             </div>
 
-            {/* BODY */}
             {open && (
-
                 <div className="accordion-body">
-
-                    {records.length === 0 && (
-                        <div className="empty">Немає записів</div>
-                    )}
-
+                    {records.length === 0 && <div className="empty">Немає записів</div>}
                     {records.length > 0 && (
-
                         <div className="timeline">
-
                             {records.map((record) => {
-
                                 const recordOpen = expandedRecords.includes(record.id);
                                 const labsOpen = expandedLabs.includes(record.id);
-
                                 const doctorName = record.appointment?.doctor
                                     ? `${record.appointment.doctor.last_name} ${record.appointment.doctor.first_name}`
                                     : "Лікар не вказаний";
-
                                 const date = record.appointment?.date || "Дата не вказана";
 
                                 return (
-
                                     <div className="timeline-item" key={record.id}>
-
                                         <div className="timeline-dot"></div>
-
                                         <div className="timeline-content">
-
-                                            {/* HEADER */}
                                             <div className="timeline-header">
-
                                                 <div className="doctor-info">
-
-                                                    <span className="doctor">
-                                                        {record.doctor_specialization}: {doctorName}
-                                                    </span>
-
-                                                    <span className="date">
-                                                        {date}
-                                                    </span>
-
+                          {/*<span className="doctor">*/}
+                          {/*  {record.doctor_specialization}: {doctorName}*/}
+                          {/*</span>*/}
+                                                    <span>{" "}
+                                                        {patient.family_doctor ? (
+                                                            <>
+                                                                <b>{patient.family_doctor.specialization}</b>:{" "}
+                                                                {patient.family_doctor.last_name} {patient.family_doctor.first_name}
+                                                            </>
+                                                        ) : (
+                                                            "Не вказано"
+                                                        )}
+</span>
+                                                    <span className="date">{date}</span>
                                                 </div>
 
-                                                <span
-                                                    className="record-toggle"
-                                                    onClick={() => toggleRecord(record.id)}
-                                                >
-                                                    {recordOpen ? "−" : "+"}
-                                                </span>
+                                                <div className="record-actions">
 
+                                                    <button
+                                                        className="edit-record-btn"
+                                                        onClick={() => {
+                                                            setEditingRecord(record);
+                                                            setShowAddModal(true);
+                                                        }}
+                                                    >
+                                                        🖊 Редагувати
+                                                    </button>
+
+                                                    <span
+                                                        className="record-toggle"
+                                                        onClick={() => toggleRecord(record.id)}
+                                                    >
+        {recordOpen ? "−" : "+"}
+    </span>
+
+                                                </div>
                                             </div>
 
-
-                                            {/* DETAILS */}
                                             {recordOpen && (
-
                                                 <div className="record-details">
-
                                                     <div className="record-grid">
-
                                                         <div className="record-card complaint">
                                                             <div className="card-title">Скарга</div>
                                                             <div className="card-value">
@@ -117,7 +181,7 @@ export default function MedicalRecordsSection({ records }) {
                                                             </div>
                                                         </div>
                                                         <div className="record-card anamnesis">
-                                                            <div className="card-title">Первиний огляд</div>
+                                                            <div className="card-title">Первинний огляд</div>
                                                             <div className="card-value">
                                                                 {record.initial_review  || "Не вказано"}
                                                             </div>
@@ -149,32 +213,23 @@ export default function MedicalRecordsSection({ records }) {
                                                                 {record.notes || "Не вказано"}
                                                             </div>
                                                         </div>
-
                                                     </div>
-                                                    {/* LABS */}
+
                                                     {record.services?.length > 0 && (
-
                                                         <div className="labs-section">
-
                                                             <div
                                                                 className="labs-header"
-                                                                onClick={() => toggleLabs(record.id)}>
-
-                                                <span className="labs-title">
-                                                    Аналізи
-                                                </span>
+                                                                onClick={() => toggleLabs(record.id)}
+                                                            >
+                                                                <span className="labs-title">Аналізи</span>
                                                                 <span className={`labs-arrow ${labsOpen ? "open" : ""}`}></span>
                                                             </div>
 
                                                             {labsOpen && (
-
                                                                 <div className="labs-list">
-
-                                                                    {record.services.map((service) => (
-
+                                                                    {record.services.map((service) =>
                                                                         service.labs?.map((lab) =>
                                                                             lab.files?.map((file) => (
-
                                                                                 <a
                                                                                     key={file.id}
                                                                                     href={file.path}
@@ -183,39 +238,33 @@ export default function MedicalRecordsSection({ records }) {
                                                                                 >
                                                                                     {service.name}
                                                                                 </a>
-
                                                                             ))
                                                                         )
-
-                                                                    ))}
-
+                                                                    )}
                                                                 </div>
-
                                                             )}
-
                                                         </div>
-
                                                     )}
-
                                                 </div>
-
                                             )}
-
                                         </div>
-
                                     </div>
-
                                 );
                             })}
-
                         </div>
-
                     )}
-
                 </div>
-
             )}
-
+            <AddMedicalRecordModal
+                isOpen={showAddModal}
+                onClose={() => {
+                    setShowAddModal(false);
+                    setEditingRecord(null);
+                }}
+                patientId={patientId}
+                record={editingRecord}
+                records={records}
+            />
         </div>
     );
 }

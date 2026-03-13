@@ -1,0 +1,66 @@
+.patients-page {
+  padding: 30px;
+}
+
+.patients-page h2 {
+  margin-bottom: 20px;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+/* контейнер таблиці */
+.patients-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+/* header */
+.patients-table thead {
+  background: #f7f9fc;
+}
+
+.patients-table th {
+  text-align: left;
+  padding: 14px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 1px solid #eee;
+}
+
+/* rows */
+.patients-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f1f1;
+  font-size: 14px;
+  color: #333;
+}
+
+/* hover */
+.patients-table tbody tr {
+  transition: background 0.2s;
+}
+
+.patients-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* кнопка */
+.patients-table button {
+  background: #4f6ef7;
+  border: none;
+  color: white;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.patients-table button:hover {
+  background: #3f5de0;
+}

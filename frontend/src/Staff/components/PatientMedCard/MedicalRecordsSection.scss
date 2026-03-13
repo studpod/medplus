@@ -1,0 +1,20 @@
+.header-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.add-record-btn{
+  background:#2b7cff;
+  color:white;
+  border:none;
+  padding:6px 12px;
+  border-radius:6px;
+  font-size:13px;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.add-record-btn:hover{
+  background:#1f66e5;
+}

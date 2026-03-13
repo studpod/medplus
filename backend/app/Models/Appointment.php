@@ -33,4 +33,13 @@ class Appointment extends Model
     {
         return $this->hasMany(AppointmentService::class);
     }
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'appointment_services', 'appointment_id', 'service_id')
+            ->withPivot('price');
+    }
+    public function statusLogs()
+    {
+        return $this->hasMany(AppointmentStatusLog::class);
+    }
 }

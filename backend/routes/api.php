@@ -70,21 +70,42 @@ Route::prefix('auth')->group(function () {
 
 });
 
-Route::group(['prefix' => 'staff/auth'], function () {
-    Route::post('/login', [AuthStaffController::class, 'login']);
+//Route::group(['prefix' => 'staff/auth'], function () {
+//    Route::post('/login', [AuthStaffController::class, 'login']);
+//
+//    Route::middleware('auth:api', )->group(function () {
+//        Route::get('/me', [AuthStaffController::class, 'me']);
+//        Route::post('/logout', [AuthStaffController::class, 'logout']);
+//    });
+//});
+Route::post('/staff/sync', function (Request $request) {
 
-    Route::middleware('auth:api', )->group(function () {
-        Route::get('/me', [AuthStaffController::class, 'me']);
-        Route::post('/logout', [AuthStaffController::class, 'logout']);
-    });
+    $firebaseUser = $request->all();
+
+    if (!isset($firebaseUser['uid']) || !isset($firebaseUser['email'])) {
+        return response()->json(['error' => 'No Firebase user data provided'], 400);
+    }
+
+    $user = User::where('firebase_uid', $firebaseUser['uid'])->first();
+
+    if (!$user) {
+        return response()->json(['error' => 'User not registered in system'], 403);
+    }
+
+    if (!in_array($user->role, ['doctor','lab_technician','receptionist'])) {
+        return response()->json(['error' => 'Access denied'], 403);
+    }
+
+    return response()->json($user);
+
 });
-
 Route::middleware([FirebaseAuth::class, 'role:patient'])
     ->prefix('patient')
     ->group(function () {
 
         // Route::get('/dashboard', [PersonalOfficeController::class, 'dashboard']);
         Route::prefix('view')->group(function () {
+            Route::get('/me', [MainController::class, 'me']);
              Route::get('/profile',[PersonalOfficeController::class, 'viewProfile']); // api/patient/view/profile
              Route::get('/medical-records', [PersonalOfficeController::class, 'viewMedicalRecords']); // api/patient/view/medical-records
             Route::get('receptions', [PersonalOfficeController::class, 'viewReception']);
@@ -102,15 +123,17 @@ Route::middleware([FirebaseAuth::class, 'role:patient'])
         });
     });
 
-Route::middleware(['auth:api', 'role:doctor'])
+Route::middleware([FirebaseAuth::class, 'role:doctor'])
     ->prefix('doctor')
     ->group(function () {
        Route::prefix('view')->group(function (){
           Route::get('/schedule',[MainController::class, 'viewSchedule']);
-          Route::get('/reception', [MainController::class, 'viewReception']);
+          Route::get('/appointments', [MainController::class, 'viewReception']);
+           Route::get('/calendar', [MainController::class, 'calendar']);
               Route::prefix('patient')->group(function(){
                   Route::get('/all', [MainController::class, 'viewPatients']);
                       Route::prefix('{patientId}')->group(function(){
+                          Route::get('appointments', [MainController::class, 'getPatientAppointments']);
                         Route::get('/medical-card', [MainController::class, 'viewMedicalCard']);
                         Route::get('/labs-result', [MainController::class, 'viewLabsResult']);
                       });
@@ -119,10 +142,13 @@ Route::middleware(['auth:api', 'role:doctor'])
        });
        Route::prefix('control')->group(function(){
            Route::prefix('patient/{patientId}')->group(function(){
-                Route::post('/medical-card', [PatientMedicalController::class, 'addMedicalCard']);
-
-
+               Route::prefix('medical-card')->group(function(){
+                   Route::post('/add', [PatientMedicalController::class, 'addMedicalCard']);
+                   Route::put('/{recordId}/update', [PatientMedicalController::class, 'updateMedicalCard']);
+               });
            });
+
+           Route::put('/update-status-appointment/{appointmentId}/cancelled', [MainController::class, 'updateStatusAppointment']);
        });
     });
 

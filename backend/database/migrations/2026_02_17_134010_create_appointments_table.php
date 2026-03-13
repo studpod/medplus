@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('doctor_id')->constrained('doctors')->onDelete('cascade');
             $table->date('date');
             $table->time('time');
-            $table->enum('status', ['expected', 'completed', 'cancelled']);
+            $table->enum('status', ['expected', 'completed', 'cancelled', 'no_show']);
             $table->timestamps();
         });
     }

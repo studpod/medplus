@@ -1,0 +1,329 @@
+.medical-card {
+  max-width: 1000px;
+  margin: auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+  overflow: hidden;
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 25px 30px;
+    background: #f0f8f6;
+    border-bottom: 1px solid #e3e8ec;
+
+    h2 {
+      color: #1e7f6d;
+      margin-bottom: 10px;
+    }
+
+    .patient-meta span {
+      display: block;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 4px;
+    }
+  }
+
+  .card-body {
+    padding: 30px;
+
+    .visit-section {
+      margin-bottom: 20px;
+      border-radius: 10px;
+      background: #f9fafb;
+      border: 1px solid #e3e8ec;
+
+      h3 {
+        margin: 0;
+        padding: 15px 20px;
+        background: #e3f0ec;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        font-size: 16px;
+        color: #1e7f6d;
+        border-bottom: 1px solid #dce3e6;
+      }
+
+      .visit-details {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .section {
+          margin-bottom: 12px;
+
+          h4 {
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #1e7f6d;
+            border-left: 4px solid #1e7f6d;
+            padding-left: 8px;
+          }
+
+          p {
+            font-size: 14px;
+            color: #444;
+          }
+
+          ul {
+            list-style: none;
+            padding-left: 0;
+
+            li {
+              margin-bottom: 6px;
+
+              a {
+                color: #1e7f6d;
+                text-decoration: none;
+                &:hover { text-decoration: underline; }
+              }
+            }
+          }
+        }
+
+        .diagnosis-item {
+          background: #f8fbff;
+          padding: 8px 12px;
+          border-radius: 6px;
+
+          .diagnosis-code {
+            background: #1e7f6d;
+            color: white;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+          }
+        }
+
+        .prescriptions .prescription-item {
+          display: grid;
+          grid-template-columns: 2fr 1fr 1fr;
+          background: #fafafa;
+          padding: 10px 12px;
+          border-radius: 6px;
+          margin-bottom: 8px;
+
+          strong { display: block; }
+          span { font-size: 13px; color: #666; }
+        }
+      }
+    }
+  }
+}
+.patient-info-block {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin-bottom: 20px;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  border: 1px solid #edf1f5;
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #2d3748;
+  }
+
+  .patient-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+
+    span {
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      background: #f8fafc;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid #eef2f6;
+
+      b {
+        font-size: 12px;
+        font-weight: 600;
+        color: #718096;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      color: #2d3748;
+      font-weight: 500;
+    }
+  }
+}
+/* Responsive */
+@media (max-width: 768px) {
+  .card-header { flex-direction: column; gap: 10px; }
+  .visit-details { padding: 15px; }
+}
+
+
+.header-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.add-record-btn{
+  background:#2b7cff;
+  color:white;
+  border:none;
+  padding:6px 12px;
+  border-radius:6px;
+  font-size:13px;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.add-record-btn:hover{
+  background:#1f66e5;
+}
+
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
+}
+
+//.modal{
+//  background:white;
+//  width:600px;
+//  border-radius:12px;
+//  padding:20px;
+//  box-shadow:0 10px 40px rgba(0,0,0,0.2);
+//}
+
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
+}
+
+.close-btn{
+  background:none;
+  border:none;
+  font-size:20px;
+  cursor:pointer;
+}
+
+.modal-body{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.modal-body textarea{
+  resize:none;
+  min-height:60px;
+  padding:8px;
+  border:1px solid #ddd;
+  border-radius:6px;
+}
+
+.modal-footer{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:15px;
+}
+
+.cancel-btn{
+  background:#eee;
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
+}
+
+.save-btn{
+  background:#2b7cff;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
+}
+
+.record-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.edit-record-btn{
+  background:#f3f6fb;
+  border:1px solid #dbe2ea;
+  border-radius:6px;
+  padding:4px 6px;
+  cursor:pointer;
+  font-size:14px;
+  transition:0.2s;
+}
+
+.edit-record-btn:hover{
+  background:#e9eef7;
+}
+
+
+.modal{
+  background:white;
+  width:900px; // ширша
+  max-height:85vh;
+  border-radius:14px;
+  padding:24px;
+  box-shadow:0 15px 45px rgba(0,0,0,0.2);
+  overflow:hidden;
+}
+
+.modal-body-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  max-height:60vh;
+  overflow-y:auto;
+}
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+
+  label{
+    font-size:13px;
+    font-weight:600;
+    color:#475569;
+  }
+
+  textarea,
+  select{
+    resize:none;
+    min-height:70px;
+    padding:8px 10px;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    font-size:14px;
+    transition:0.2s;
+  }
+
+  textarea:focus,
+  select:focus{
+    outline:none;
+    border-color:#2b7cff;
+    box-shadow:0 0 0 2px rgba(43,124,255,0.15);
+  }
+}
+
+.form-group.full{
+  grid-column:1 / -1;
+}

@@ -1,0 +1,127 @@
+.calendar-container {
+  width: 100%;
+  background: #f8f9fa;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  font-family: "Inter", sans-serif;
+  position: relative;
+}
+
+/* Toolbar */
+.calendar-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nav-buttons button {
+  margin: 0 4px;
+}
+
+.label-and-views {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-buttons button {
+  margin-left: 6px;
+}
+
+/* popup календаря поверх */
+.rbc-overlay {
+  z-index: 9999 !important;
+}
+
+
+.rbc-calendar {
+  min-height: 650px;
+  height: auto !important;
+  font-size: 14px;
+  color: #333;
+}
+.rbc-allday-cell {
+  display: none;
+}
+.rbc-header {
+  background: #fff;
+  color: #4b4b4b;
+  font-weight: 600;
+  padding: 12px 0;
+  text-align: center;
+  font-size: 14px;
+  border-bottom: 1px solid #e6e6e6;
+}
+.rbc-time-content {
+  background: #fafafa;
+}
+.rbc-time-content > .rbc-row {
+  border-bottom: 1px solid #e8e8e8;
+}
+.rbc-time-gutter {
+  background: #f1f1f1;
+  border-right: 1px solid #e8e8e8;
+  padding-right: 8px;
+  text-align: right;
+  font-size: 13px;
+  color: #666; }
+.rbc-event {
+  background: #a8dadc;
+  color: #1d3557;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.rbc-event:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+.rbc-time-slot { border-bottom: 1px solid #e8e8e8; border-left: 1px solid #e8e8e8; border-right: 1px solid #e8e8e8; background: transparent; }
+.slot-working { background: #e6f2f0; border-left: 1px solid #b5d6ce; border-right: 1px solid #b5d6ce; border-bottom: 1px solid #b5d6ce; }
+.slot-off { background: #f6f6f6; border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; }
+.today-slot { border-left: 2px solid #457b9d; border-right: 2px solid #457b9d; }
+.calendar-toolbar button { background: #457b9d; color: #fff; border: none; padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 13px; transition: all 0.2s ease; }
+.calendar-toolbar button:hover { background: #1d3557; }
+.calendar-toolbar .active { background: #1d3557; box-shadow: 0 4px 12px rgba(69,123,157,0.3); }
+.calendar-toolbar .date-button { background: #fff; color: #457b9d; border: 1px solid #457b9d; font-weight: 600; padding: 6px 12px; border-radius: 10px; transition: all 0.2s ease; }
+.calendar-toolbar .date-button:hover { background: #e1eef6; }
+@media(max-width:768px) {
+  .calendar-toolbar { justify-content: center; gap: 6px; }
+  .calendar-toolbar button, .calendar-toolbar .date-button { flex: 1 1 auto; font-size: 12px; padding: 6px 10px; }
+  .rbc-header { font-size: 12px; padding: 8px 0; }
+}
+/* Випадаючий календар поверх */
+.datepicker-popup {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  border-radius: 12px;
+}
+
+/* Відстані між кнопками toolbar */
+.toolbar-left button,
+.toolbar-right button,
+.view-buttons button {
+  margin: 0 6px;
+}
+
+.rbc-time-content .rbc-day-slot:nth-child(7) {
+  display: none;
+}
+
+.rbc-header:nth-child(7) {
+  display: none;
+}
+
