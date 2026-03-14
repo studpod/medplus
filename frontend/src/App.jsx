@@ -19,6 +19,11 @@ import PatientMedicalCard from "./Staff/components/PatientMedCard/PatientMedical
 import PatientsPage from "./Staff/pages/PatientsPage";
 import AppointmentsPage from "./Staff/pages/AppointmentsPage";
 
+import VideoPage from "./pages/VideoPage";
+import StaffVideoRoom from "./Staff/pages/StaffVideoRoom"
+
+
+
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./styles/global.scss";
@@ -44,7 +49,8 @@ function App() {
     );
 
 
-    const showHeader = !location.pathname.startsWith("/staff");
+    const showHeader = !location.pathname.startsWith("/staff") &&
+        !location.pathname.startsWith("/video");;
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -146,7 +152,11 @@ function App() {
                     path="/reception"
                     element={user ? <ReceptionPage /> : <Navigate to="/auth" />}
                 />
-
+                <Route path="/video" element={user || staffUser ? <VideoPage /> : <Navigate to="/auth" />} />
+                <Route
+                    path="/video/:room"
+                    element={user || staffUser ? <VideoPage /> : <Navigate to="/auth" />}
+                />
                 {/* STAFF */}
                 <Route
                     path="/staff/login"
@@ -166,6 +176,7 @@ function App() {
                     <Route path="patient/:patientId/medical-card"
                         element={<PatientMedicalCard />}
                     />
+                    <Route path="video" element={<StaffVideoRoom />} />
                 </Route>
             </Routes>
 

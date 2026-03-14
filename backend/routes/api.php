@@ -11,12 +11,24 @@ use App\Http\Controllers\Staff\Doctor\{MainController, PatientMedicalController}
 use App\Http\Controllers\Staff\Laborant\{MainLabController};
 use App\Http\Controllers\Staff\Receptionist\MainReceptionistController;
 use App\Http\Controllers\PublicViewController;
+use App\Http\Controllers\VideoSessionController;
 use App\Models\User;
 
 
 
 Route::middleware(['auth:'])->get('/user', function (Request $request) {
     return $request->user();
+});
+
+
+Route::middleware(FirebaseAuth::class)->group(function(){
+
+    Route::post('/video/session',[VideoSessionController::class,'create']);
+
+    Route::get('/video/session/{room}',
+        [VideoSessionController::class,'get']
+    );
+
 });
 
 Route::group(['prefix' => 'public/view'], function () {
