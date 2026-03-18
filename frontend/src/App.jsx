@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation,useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -21,6 +21,7 @@ import AppointmentsPage from "./Staff/pages/AppointmentsPage";
 
 import VideoPage from "./pages/VideoPage";
 import StaffVideoRoom from "./Staff/pages/StaffVideoRoom"
+import StaffWaitingRoom from "./Staff/components/VideoRoom/StaffWaitingRoom";
 
 
 
@@ -47,7 +48,10 @@ function App() {
     const [staffUser, setStaffUser] = useState(
         JSON.parse(localStorage.getItem("staff_user"))
     );
-
+    function StaffWaitingRoomWrapper() {
+        const { patientId } = useParams();
+        return <StaffWaitingRoom patientId={patientId} />;
+    }
 
     const showHeader = !location.pathname.startsWith("/staff") &&
         !location.pathname.startsWith("/video");;
@@ -161,7 +165,9 @@ function App() {
                 <Route
                     path="/staff/login"
                     element={<StaffLogin setUser={setStaffUser} />}
+
                 />
+                <Route path="/staff/video/waiting/:patientId" element={<StaffWaitingRoomWrapper />} />
                 <Route
                     path="/staff"
                     element={
@@ -177,6 +183,8 @@ function App() {
                         element={<PatientMedicalCard />}
                     />
                     <Route path="video" element={<StaffVideoRoom />} />
+
+
                 </Route>
             </Routes>
 

@@ -11,7 +11,7 @@ export default function StaffSidebar() {
         { to: "/staff", label: "Dashboard", icon: "fas fa-home" },
         { to: "/staff/appointments", label: "Прийоми", icon: "fas fa-calendar-check" },
         { to: "/staff/patients", label: "Пацієнти", icon: "fas fa-user-injured" },
-        { to: "/staff/lab", label: "Лабораторія", icon: "fas fa-flask" },
+        { to: "/staff/video", label: "Онлайн консультація", icon: "fas fa-flask" },
         { to: "/staff/settings", label: "Налаштування", icon: "fas fa-cog" },
     ];
 
