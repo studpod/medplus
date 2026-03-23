@@ -3,12 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { db } from "../../../firebase";
 import { setDoc, doc, deleteDoc, collection, onSnapshot, addDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
-
 import VideoControls from "./VideoControls";
-import "../../pages/video.scss"
+import API from "../../../api";
+import "../../pages/video.scss";
 
 export default function VideoCall({ roomIdProp }) {
-
     const navigate = useNavigate();
 
     const [camera, setCamera] = useState(true);
@@ -27,6 +26,7 @@ export default function VideoCall({ roomIdProp }) {
 
     useEffect(() => { startRoom(); }, []);
 
+
     useEffect(() => {
         const interval = setInterval(() => {
             const now = new Date();
@@ -35,6 +35,7 @@ export default function VideoCall({ roomIdProp }) {
         return () => clearInterval(interval);
     }, []);
 
+    
     const detectSpeaking = (stream, setState) => {
         const audioContext = new AudioContext();
         const analyser = audioContext.createAnalyser();
@@ -51,6 +52,7 @@ export default function VideoCall({ roomIdProp }) {
         check();
     };
 
+    
     const startRoom = async () => {
         pcRef.current = new RTCPeerConnection(configuration);
         const localStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
@@ -123,18 +125,28 @@ export default function VideoCall({ roomIdProp }) {
         setMic(track.enabled);
     };
 
+    
     const endCall = async () => {
-        pcRef.current?.close();
-        localStreamRef.current?.getTracks().forEach(t=>t.stop());
-        if(remoteVideoRef.current?.srcObject){
-            remoteVideoRef.current.srcObject.getTracks().forEach(t=>t.stop());
-            remoteVideoRef.current.srcObject = null;
+        try {
+            pcRef.current?.close();
+            localStreamRef.current?.getTracks().forEach(t => t.stop());
+            if(remoteVideoRef.current?.srcObject){
+                remoteVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
+                remoteVideoRef.current.srcObject = null;
+            }
+
+            if(roomRefRef.current) await deleteDoc(roomRefRef.current);
+
+            
+            await API.put("/doctor/control/video-call/end", { room_id: roomIdProp });
+
+            toast.info("Онлайн консультацію завершено, статус оновлено");
+            navigate("/staff/video", { replace: true });
+
+        } catch (err) {
+            console.error("Ошибка завершения звонка", err);
+            toast.error("Не удалось завершить консультацию");
         }
-
-        if(roomRefRef.current) await deleteDoc(roomRefRef.current);
-
-        toast.info("Ви завершили онлайн консультацію з пацієнтом");
-        navigate("/staff/video", { replace: true });
     };
 
     return (

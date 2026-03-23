@@ -6,8 +6,9 @@ import PersonalSection from "../../components/Cabinet/PersonalSection";
 import MedicalRecordsSection from "../../components/Cabinet/MedicalRecordsSection";
 
 export default function Cabinet() {
-    const [patientData, setPatientData] = useState({}); // <-- було null
+    const [patientData, setPatientData] = useState({});
     const [medicalRecords, setMedicalRecords] = useState([]);
+    const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -31,16 +32,55 @@ export default function Cabinet() {
             }
         };
 
-        Promise.all([fetchProfile(), fetchMedical()]).finally(() => setLoading(false));
+        const fetchAppointments = async () => {
+            try {
+                const res = await API.get("/patient/view/receptions");
+                setAppointments(res.data.receptions || []);
+            } catch (err) {
+                console.error("Помилка завантаження прийомів", err);
+                setAppointments([]);
+            }
+        };
+
+        Promise.all([fetchProfile(), fetchMedical(), fetchAppointments()])
+            .finally(() => setLoading(false));
     }, []);
 
-    if (loading) return null;
+    const joinOnlineCall = (roomId) => {
+        window.open(`/patient/video/${roomId}`, "_blank");
+    };
+
+    if (loading) return <p>Завантаження...</p>;
 
     return (
         <div className="cabinet-page">
             <div className="cabinet-content">
                 <PersonalSection patientData={patientData} />
                 <MedicalRecordsSection records={medicalRecords} />
+
+                <div className="appointments-section">
+                    <h2>Мої прийоми</h2>
+                    {appointments.length === 0 && <p>Немає записів</p>}
+
+                    {appointments.map(app => (
+                        <div key={app.id} className="appointment-card">
+                            <div>
+                                <strong>Лікар: {app.doctor.user.first_name} {app.doctor.user.last_name}</strong>
+                                <p>Дата: {app.date} | Час: {app.time}</p>
+                                <p>Статус: {app.status}</p>
+                            </div>
+
+                            {app.is_online && app.status === "expected" && (
+                                <button
+                                    className="join-btn"
+                                    onClick={() => joinOnlineCall(app.video_call?.room_id)}
+                                >
+                                    Підключитися до онлайн консультації
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

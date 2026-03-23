@@ -141,6 +141,7 @@ Route::middleware([FirebaseAuth::class, 'role:doctor'])
        Route::prefix('view')->group(function (){
           Route::get('/schedule',[MainController::class, 'viewSchedule']);
           Route::get('/appointments', [MainController::class, 'viewReception']);
+          Route::get('/appointments/online', [MainController::class,'viewOnlineAppointments']);
            Route::get('/calendar', [MainController::class, 'calendar']);
               Route::prefix('patient')->group(function(){
                   Route::get('/all', [MainController::class, 'viewPatients']);
@@ -159,6 +160,11 @@ Route::middleware([FirebaseAuth::class, 'role:doctor'])
                    Route::put('/{recordId}/update', [PatientMedicalController::class, 'updateMedicalCard']);
                });
            });
+           Route::prefix('video-call')->group(function(){
+           Route::post('/start', [MainController::class, 'startVideoCall']);
+           Route::put('/end', [MainController::class, 'endVideoCall']);
+           });
+           
 
            Route::put('/update-status-appointment/{appointmentId}/cancelled', [MainController::class, 'updateStatusAppointment']);
        });

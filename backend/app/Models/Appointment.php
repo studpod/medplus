@@ -13,6 +13,7 @@ class Appointment extends Model
         'date',
         'time',
         'status',
+        'is_online'
         ];
     public function patient()
     {
@@ -41,5 +42,9 @@ class Appointment extends Model
     public function statusLogs()
     {
         return $this->hasMany(AppointmentStatusLog::class);
+    }
+    public function videoCall()
+    {
+        return $this->hasOne(VideoCall::class);
     }
 }

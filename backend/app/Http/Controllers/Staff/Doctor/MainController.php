@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use App\Models\{Doctor, Patient, DoctorSchedules, MedicalRecord, Appointment, AppointmentStatusLog};
+use App\Models\{Doctor, Patient, DoctorSchedules, MedicalRecord, Appointment, AppointmentStatusLog,VideoCall};
 
 
 class MainController extends Controller
@@ -297,7 +297,7 @@ class MainController extends Controller
         $appointment->status = 'no_show';
         $appointment->save();
 
-        // Створюємо лог
+        //  лог
         $log = AppointmentStatusLog::create([
             'appointment_id' => $appointment->id,
             'old_status' => $oldStatus,
@@ -313,4 +313,113 @@ class MainController extends Controller
             'logs' => $appointment->statusLogs
         ]);
     }
+
+    public function viewOnlineAppointments()
+    {
+        $user = Auth::user();
+
+        
+        $doctor = $user->doctor;
+
+        if (!$doctor) {
+            return response()->json([
+                'error' => 'Лікаря не знайдено'
+            ], 404);
+        }
+
+        
+        $appointments = Appointment::with('patient')
+            ->where('doctor_id', $doctor->id)
+            ->where('is_online', true)
+            ->orderBy('date')
+            ->orderBy('time')
+            ->get()
+            ->map(function ($appointment) {
+                return [
+                    'id' => $appointment->id,
+                    'patient_name' =>
+                        $appointment->patient->last_name . ' ' .
+                        $appointment->patient->first_name . ' ' .
+                        $appointment->patient->middle_name,
+
+                    'date' => $appointment->date,
+                    'time' => $appointment->time,
+                    'status' => $appointment->status
+                ];
+            });
+
+        return response()->json([
+            'appointments' => $appointments
+        ]);
+    }
+
+
+    public function startVideoCall(Request $request)
+    {
+        $user = auth()->user();
+        $doctor = $user->doctor;
+
+        $validated = $request->validate([
+            'appointment_id' => 'required|exists:appointments,id'
+        ]);
+
+        $appointment = Appointment::findOrFail($validated['appointment_id']);
+
+        if ($appointment->doctor_id !== $doctor->id) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        if (!$appointment->is_online) {
+            return response()->json(['error' => 'Not online appointment'], 400);
+        }
+
+        $existingCall = VideoCall::where('appointment_id', $appointment->id)
+            ->whereIn('status', ['waiting', 'active'])
+            ->first();
+
+        if ($existingCall) {
+            return response()->json([
+                'room_id' => $existingCall->room_id
+            ]);
+        }
+        $roomId = 'call_' . rand(100000, 999999);
+
+        VideoCall::create([
+            'appointment_id' => $appointment->id,
+            'room_id' => $roomId,
+            'status' => 'waiting'
+        ]);
+
+        return response()->json([
+            'room_id' => $roomId
+        ]);
+    }
+    public function endVideoCall(Request $request)
+{
+    $request->validate([
+        'room_id' => 'required|string|exists:video_calls,room_id'
+    ]);
+
+    $videoCall = VideoCall::where('room_id', $request->room_id)->firstOrFail();
+    $appointment = $videoCall->appointment;
+
+    $videoCall->status = 'ended';
+    $videoCall->save();
+
+ 
+    AppointmentStatusLog::create([
+        'appointment_id' => $appointment->id,
+        'old_status' => $appointment->status,
+        'new_status' => 'completed',
+        'changed_by' => auth()->id()
+    ]);
+
+    
+    $appointment->status = 'completed';
+    $appointment->save();
+
+    return response()->json([
+        'message' => 'Онлайн консультація завершена, статусы обновлены'
+    ]);
+}
 }

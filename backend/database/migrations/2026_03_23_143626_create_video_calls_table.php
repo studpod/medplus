@@ -11,20 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('video_sessions', function (Blueprint $table) {
+        Schema::create('video_calls', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('doctor_id')
-                ->constrained('doctors')
-                ->cascadeOnDelete();
-
-            $table->foreignId('patient_id')
-                ->constrained('patients')
-                ->cascadeOnDelete();
-
+            $table->foreignId('appointment_id')->constrained('appointments')->cascadeOnDelete();
             $table->string('room_id')->unique();
-
-            $table->enum('status',['waiting','active','ended'])->default('waiting');
+            $table->enum('status', ['waiting', 'active', 'ended'])->default('waiting');
             $table->timestamps();
         });
     }
@@ -34,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('video_sessions');
+        Schema::dropIfExists('video_calls');
     }
 };

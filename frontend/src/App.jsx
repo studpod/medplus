@@ -40,11 +40,11 @@ function AppWrapper() {
 function App() {
     const location = useLocation();
 
-    // Пацієнти
+    
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Медперсонал
+    
     const [staffUser, setStaffUser] = useState(
         JSON.parse(localStorage.getItem("staff_user"))
     );
@@ -54,7 +54,7 @@ function App() {
     }
 
     const showHeader = !location.pathname.startsWith("/staff") &&
-        !location.pathname.startsWith("/video");;
+        !location.pathname.startsWith("/patient/video");;
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -158,7 +158,7 @@ function App() {
                 />
                 <Route path="/video" element={user || staffUser ? <VideoPage /> : <Navigate to="/auth" />} />
                 <Route
-                    path="/video/:room"
+                    path="/patient/video/:room"
                     element={user || staffUser ? <VideoPage /> : <Navigate to="/auth" />}
                 />
                 {/* STAFF */}

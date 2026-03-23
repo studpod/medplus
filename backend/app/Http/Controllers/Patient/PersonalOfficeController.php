@@ -173,7 +173,7 @@ class PersonalOfficeController extends Controller
         }
     }
     public function viewReception(){
-        $user = auth()->user();
+        $user = Auth::user();
 
         $patient = $user->patient;
 
@@ -183,10 +183,11 @@ class PersonalOfficeController extends Controller
             ], 404);
         }
 
-        $receptions = $patient->receptions()
+        $receptions = $patient->appointments()
             ->with([
                 'doctor.user',
-                'doctor.specialization'
+                'doctor.specialization',
+                'videoCall'
             ])
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc')
