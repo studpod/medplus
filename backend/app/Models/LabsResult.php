@@ -9,6 +9,7 @@ class LabsResult extends Model
     protected $fillable = [
          'appointment_id' ,
         'labNumber',
+        'appointment_service_id'
 
     ];
     public function appointmentService()

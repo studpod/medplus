@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Staff\Doctor;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use App\Models\{Doctor, Patient, DoctorSchedules, MedicalRecord, Appointment, AppointmentStatusLog,VideoCall};
+use Kreait\Firebase\Factory;
+use App\Models\{Doctor, Patient, DoctorSchedules,
+    MedicalRecord, Appointment, AppointmentService, AppointmentStatusLog,VideoCall, Referral,Specialization,
+    LabsResult, LabsFile, Service,};
 
 
 class MainController extends Controller
@@ -102,14 +106,11 @@ class MainController extends Controller
 
     public function viewReception(Request $request)
     {
-
         $user = auth()->user();
-
 
         if ($user->role !== 'doctor') {
             return response()->json(['error' => 'Доступ дозволено тільки лікарям'], 403);
         }
-
 
         $doctor = $user->doctor;
 
@@ -117,12 +118,16 @@ class MainController extends Controller
             return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
         }
 
-
         $receptions = Appointment::with([
             'patient',
-            'statusLogs.user'
+            'statusLogs.user',
+            'appointmentServices.service'
         ])
             ->where('doctor_id', $doctor->id)
+
+
+            ->where('is_online', false)
+
             ->orderByRaw("FIELD(status, 'expected', 'completed', 'cancelled')")
             ->orderBy('date')
             ->orderBy('time')
@@ -148,17 +153,27 @@ class MainController extends Controller
             return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
         }
 
+        // ❗ ВАЖНО: проверь правильное поле
+        $isFamilyDoctor = $doctor->specialization && $doctor->specialization->name === 'Сімейни лікар';
 
-        $cacheKey = "doctor_{$doctor->id}_patients";
+        $query = Patient::query();
 
-        // Кеш на 10 хвилин
-        $patients = Cache::remember($cacheKey, 600, function () use ($doctor) {
-            return Patient::with('user') // додаємо інформацію про користувача (email, phone)
-            ->where('doctor_id', $doctor->id)
+        if ($isFamilyDoctor) {
+            // 🔹 семейный врач — только свои пациенты
+            $patients = $query
+                ->with('user')
+                ->where('doctor_id', $doctor->id)
                 ->orderBy('last_name', 'asc')
                 ->orderBy('first_name', 'asc')
                 ->get();
-        });
+        } else {
+            // 🔹 узкий специалист — ограниченные данные
+            $patients = $query
+                ->select('id', 'first_name', 'last_name', 'middle_name', 'date_of_birth')
+                ->orderBy('last_name', 'asc')
+                ->orderBy('first_name', 'asc')
+                ->get();
+        }
 
         return response()->json([
             'doctor_id' => $doctor->id,
@@ -175,61 +190,83 @@ class MainController extends Controller
         }
 
         $doctor = $user->doctor()->with('specialization')->first();
+
         if (!$doctor) {
             return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
         }
 
-        $cacheKey = "doctor:{$doctor->id}:patient:{$patientId}:medical-card";
+        $patient = Patient::with(['user', 'doctor.specialization'])->findOrFail($patientId);
 
 
-        $medicalCard = Cache::remember($cacheKey, 600, function () use ($patientId, $doctor) {
+        $isFamilyDoctor = $patient->doctor_id === $doctor->id;
 
-            $patient = Patient::where('id', $patientId)
-                ->where('doctor_id', $doctor->id)
-                ->firstOrFail();
+        $hasAppointment = Appointment::where('patient_id', $patientId)
+            ->where('doctor_id', $doctor->id)
+            ->exists();
 
-            $medicalRecords = MedicalRecord::with([
-                'appointment',
-                'labsResults' => function($q) {
-                    $q->orderBy('labNumber', 'asc');
-                }
-            ])
-                ->whereHas('appointment', function($q) use ($patientId) {
-                    $q->where('patient_id', $patientId);
-                })
-                ->orderBy('start_date', 'desc')
-                ->get();
+        if (!$isFamilyDoctor && !$hasAppointment) {
+            return response()->json(['error' => 'Немає доступу до цього пацієнта'], 403);
+        }
+        $email = null;
 
-            Log::info("Medical card fetched from DB for patient {$patientId}");
+        if ($patient->user && $patient->user->firebase_uid) {
+            try {
+                $factory = (new Factory)
+                    ->withServiceAccount(storage_path('/firebase/medplus-auth-fb352-firebase-adminsdk-fbsvc-9dc637fc58.json'));
 
-            return [
-                'patient' => [
-                    'id' => $patient->id,
-                    'first_name' => $patient->first_name,
-                    'last_name' => $patient->last_name,
-                    'middle_name' => $patient->middle_name,
-                    'date_of_birth' => $patient->date_of_birth,
-                    'gender' => $patient->gender,
-                    'phone' => $patient->phone,
-                    'email' => $patient->user->email ?? null,
-                    'address' => $patient->address,
-                    'notes' => $patient->notes,
+                $auth = $factory->createAuth();
 
-                    'family_doctor' => [
-                        'first_name' => $doctor->first_name,
-                        'last_name' => $doctor->last_name,
-                        'middle_name' => $doctor->middle_name,
-                        'specialization' => $doctor->specialization->name ?? null
-                    ]
-                ],
+                $firebaseUser = $auth->getUser($patient->user->firebase_uid);
 
-                'medical_records' => $medicalRecords
-            ];
-        });
+                $email = $firebaseUser->email;
+            } catch (\Exception $e) {
+                \Log::error("Firebase error: " . $e->getMessage());
+            }
+        }
 
-        Log::info("Medical card returned from cache for patient {$patientId}");
+        $medicalRecordsQuery = MedicalRecord::with([
+            'appointment.doctor.specialization',
+            'labsResults' => function ($q) {
+                $q->orderBy('labNumber', 'asc');
+            }
+        ])
+            ->whereHas('appointment', function ($q) use ($patientId) {
+                $q->where('patient_id', $patientId);
+            });
 
-        return response()->json($medicalCard);
+        if (!$isFamilyDoctor) {
+            $medicalRecordsQuery->whereHas('appointment', function ($q) use ($doctor) {
+                $q->where('doctor_id', $doctor->id);
+            });
+        }
+
+        $medicalRecords = $medicalRecordsQuery
+            ->orderBy('start_date', 'desc')
+            ->get();
+
+        return response()->json([
+            'patient' => [
+                'id' => $patient->id,
+                'first_name' => $patient->first_name,
+                'last_name' => $patient->last_name,
+                'middle_name' => $patient->middle_name,
+                'date_of_birth' => $patient->date_of_birth,
+                'gender' => $patient->gender,
+                'phone' => $patient->phone,
+                'email' => $email,
+                'address' => $patient->address,
+                'notes' => $patient->notes,
+
+                'family_doctor' => $patient->doctor ? [
+                    'first_name' => $patient->doctor->first_name,
+                    'last_name' => $patient->doctor->last_name,
+                    'middle_name' => $patient->doctor->middle_name,
+                    'specialization' => $patient->doctor->specialization->name ?? null
+                ] : null
+            ],
+
+            'medical_records' => $medicalRecords
+        ]);
     }
     public function getPatientAppointments($patientId)
     {
@@ -269,7 +306,9 @@ class MainController extends Controller
             ], 403);
         }
 
-        $doctor = Doctor::where('user_id', $user->id)->first();
+        $doctor = Doctor::with('specialization') // 🔥 ВАЖЛИВО
+        ->where('user_id', $user->id)
+            ->first();
 
         if (!$doctor) {
             return response()->json([
@@ -278,10 +317,8 @@ class MainController extends Controller
         }
 
         return response()->json([
-            'id' => $doctor->id,
-            'first_name' => $doctor->first_name,
-            'last_name' => $doctor->last_name,
-            'specialization' => $doctor->specialization?->name
+            'user' => $user,
+            'doctor' => $doctor
         ]);
     }
     public function updateStatusAppointment($appointmentId)
@@ -318,7 +355,7 @@ class MainController extends Controller
     {
         $user = Auth::user();
 
-        
+
         $doctor = $user->doctor;
 
         if (!$doctor) {
@@ -327,7 +364,7 @@ class MainController extends Controller
             ], 404);
         }
 
-        
+
         $appointments = Appointment::with('patient')
             ->where('doctor_id', $doctor->id)
             ->where('is_online', true)
@@ -395,31 +432,238 @@ class MainController extends Controller
         ]);
     }
     public function endVideoCall(Request $request)
-{
-    $request->validate([
-        'room_id' => 'required|string|exists:video_calls,room_id'
-    ]);
+    {
+        $request->validate([
+            'room_id' => 'required|string|exists:video_calls,room_id'
+        ]);
 
-    $videoCall = VideoCall::where('room_id', $request->room_id)->firstOrFail();
-    $appointment = $videoCall->appointment;
+        $videoCall = VideoCall::where('room_id', $request->room_id)->firstOrFail();
+        $appointment = $videoCall->appointment;
 
-    $videoCall->status = 'ended';
-    $videoCall->save();
+        $videoCall->status = 'ended';
+        $videoCall->save();
 
- 
-    AppointmentStatusLog::create([
-        'appointment_id' => $appointment->id,
-        'old_status' => $appointment->status,
-        'new_status' => 'completed',
-        'changed_by' => auth()->id()
-    ]);
 
-    
-    $appointment->status = 'completed';
-    $appointment->save();
+        AppointmentStatusLog::create([
+            'appointment_id' => $appointment->id,
+            'old_status' => $appointment->status,
+            'new_status' => 'completed',
+            'changed_by' => auth()->id()
+        ]);
 
-    return response()->json([
-        'message' => 'Онлайн консультація завершена, статусы обновлены'
-    ]);
-}
+
+        $appointment->status = 'completed';
+        $appointment->save();
+
+        return response()->json([
+            'message' => 'Онлайн консультація завершена, статусы обновлены'
+        ]);
+    }
+    public function addReferral(Request $request)
+    {
+        $user = auth()->user();
+
+        if ($user->role !== 'doctor') {
+            return response()->json(['error' => 'Тільки лікар може створювати направлення'], 403);
+        }
+
+        $doctor = $user->doctor()->with('specialization')->first();
+
+        if (!$doctor) {
+            return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
+        }
+
+        // 🔥 ПЕРЕВІРКА: тільки сімейний лікар
+        if (!$doctor->specialization || $doctor->specialization->name !== 'Сімейний лікар') {
+            return response()->json([
+                'error' => 'Тільки сімейний лікар може створювати направлення'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'to_specialization_id' => 'required|exists:specializations,id',
+            'reason' => 'nullable|string'
+        ]);
+
+        $referral = Referral::create([
+            'from_doctor_id'       => $doctor->id,
+            'patient_id'           => $validated['patient_id'],
+            'to_specialization_id' => $validated['to_specialization_id'],
+            'reason'               => $validated['reason'] ?? null,
+        ]);
+
+        return response()->json([
+            'message' => 'Направлення створено',
+            'referral' => $referral
+        ]);
+    }
+    public function getPatientReferrals($patientId)
+    {
+        $referrals = Referral::with('specialization')
+            ->where('patient_id', $patientId)
+            ->latest()
+            ->get();
+
+        return response()->json($referrals);
+    }
+
+
+
+
+    public function getSpecializations()
+    {
+        $specializations = Specialization::select('id', 'name')->get();
+
+        return response()->json($specializations);
+    }
+
+    public function getDoctorProfile()
+    {
+        $user = auth()->user();
+
+        if ($user->role !== 'doctor') {
+            return response()->json(['error' => 'Не лікар'], 403);
+        }
+
+        $doctor = $user->doctor()->with('specialization')->first();
+
+        if (!$doctor) {
+            return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
+        }
+
+        return response()->json([
+            'id' => $doctor->id,
+            'specialization' => $doctor->specialization->name
+        ]);
+    }
+    public function getAppointment($id)
+    {
+        $appointment = Appointment::with([
+            'patient',
+            'doctor',
+            'appointmentServices.service',
+            'appointmentServices.labsResults.labsFiles',
+            'medicalRecord'
+        ])->findOrFail($id);
+
+        return response()->json([
+            'appointment' => $appointment
+        ]);
+    }
+
+//    public function storeForAppointment(Request $request, $appointmentId)
+//    {
+//        $appointment = Appointment::with('appointmentServices')->findOrFail($appointmentId);
+//
+//        foreach ($appointment->appointmentServices as $service) {
+//            if ($service->service->type === 'consultation') {
+//
+//                $record = MedicalRecord::updateOrCreate(
+//                    [
+//                        'appointment_service_id' => $service->id
+//                    ],
+//                    [
+//                        'chief_complaint' => $request->chief_complaint,
+//                        'initial_review' => $request->initial_review,
+//                        'anamnesis' => $request->anamnesis,
+//                        'diagnosis' => $request->diagnosis,
+//                        'treatment' => $request->treatment,
+//                        'prescriptions' => $request->prescriptions,
+//                        'notes' => $request->notes,
+//                    ]
+//                );
+//            }
+//        }
+//
+//        return response()->json([
+//            'success' => true
+//        ]);
+//    }
+    public function getAppointmentService($id)
+    {
+        $appointmentService = AppointmentService::with([
+            'service',
+            'appointment.patient'
+        ])->findOrFail($id);
+
+        return response()->json($appointmentService);
+    }
+    public function getLabTest(Request $request)
+    {
+        $user = auth()->user();
+
+        // 🔹 проверка роли
+        if ($user->role !== 'doctor') {
+            return response()->json(['error' => 'Доступ тільки для лікарів'], 403);
+        }
+
+        $doctor = $user->doctor;
+
+        if (!$doctor) {
+            return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
+        }
+
+        // 🔹 получаем специализацию врача
+        $specializationId = $doctor->specialization_id;
+
+        // 🔹 получаем только lab_test услуги этой специализации
+        $services = Service::where('type', 'lab_test')
+            ->where('specialization_id', $specializationId)
+            ->get();
+
+        return response()->json([
+            'doctor_id' => $doctor->id,
+            'services' => $services
+        ]);
+    }
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'appointment_service_id' => 'required|exists:appointment_services,id',
+            'labNumber' => 'required|integer',
+            'files.*' => 'nullable|file'
+        ]);
+
+        $lab = LabsResult::create([
+            'appointment_service_id' => $validated['appointment_service_id'],
+            'labNumber' => $validated['labNumber'],
+        ]);
+
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $path = $file->store('labs');
+
+                LabsFile::create([
+                    'lab_id' => $lab->id,
+                    'file_path' => $path,
+                    'file_type' => $file->getClientMimeType()
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Аналіз створено',
+            'lab' => $lab
+        ]);
+    }
+    public function getAppointmentServicesByPatient($patientId)
+    {
+        $services = AppointmentService::with(['service', 'appointment'])
+            ->whereHas('appointment', function ($query) use ($patientId) {
+                $query->where('patient_id', $patientId);
+            })
+            ->whereHas('service', function ($query) {
+                $query->where('type', 'lab_test');
+            })
+            // ❗ исключаем уже созданные анализы
+            ->whereDoesntHave('labsResults')
+            ->get();
+
+        return response()->json([
+            'services' => $services
+        ]);
+    }
+
 }

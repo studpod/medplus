@@ -1,40 +1,32 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import API from "../../api";
 import AppointmentsTable from "../components/Appointments/AppointmentsTable";
 
 export default function AppointmentsPage() {
-    const [receptions, setReceptions] = useState(() => {
-        const cached = localStorage.getItem("receptions_list");
-        return cached ? JSON.parse(cached) : [];
-    });
+    const [receptions, setReceptions] = useState([]);
 
-    const [loading, setLoading] = useState(!receptions.length);
+    const fetchData = async () => {
+        try {
+            const res = await API.get("/doctor/view/appointments");
+            setReceptions(res.data.receptions || []);
+            console.log(res.data.receptions)
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     useEffect(() => {
-        const fetchReceptions = async () => {
-            try {
-                if (!receptions.length) {
-                    const res = await API.get("/doctor/view/appointments");
-                    console.log(res.data.receptions)
+        fetchData();
+    }, []);
 
-                    setReceptions(res.data.receptions || []);
+    return (
+        <div className="appointments-page">
+            <h2>Прийоми</h2>
 
-                    localStorage.setItem(
-                        "receptions_list",
-                        JSON.stringify(res.data.receptions || [])
-                    );
-                }
-            } catch (err) {
-                console.error("Помилка завантаження прийомів:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchReceptions();
-    }, [receptions.length]);
-
-    if (loading) return <div>Завантаження прийомів...</div>;
-
-    return <AppointmentsTable receptions={receptions} setReceptions={setReceptions}  />;
+            <AppointmentsTable
+                receptions={receptions}
+                refresh={fetchData}
+            />
+        </div>
+    );
 }

@@ -23,7 +23,7 @@ class MedicalRecord extends Model
     {
         return $this->belongsTo(Appointment::class);
     }
-    // Отримати всі лабораторні результати через Appointment → AppointmentService → LabsResult
+    // Отримати всі лабораторні результати через AppointmentsSection → AppointmentService → LabsResult
     public function labsResults()
     {
         return $this->hasManyThrough(

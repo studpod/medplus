@@ -4,18 +4,15 @@ import API from "../../../api";
 import "../../../components/Cabinet/MedicalRecordsSection.scss";
 import AddMedicalRecordModal from "./AddMedicalRecordModal";
 
+
+
 export default function PatientMedicalCard() {
     const { patientId } = useParams();
 
 
-    const [patient, setPatient] = useState(() => {
-        const cached = localStorage.getItem(`medical_card_${patientId}`);
-        return cached ? JSON.parse(cached).patient : null;
-    });
-    const [records, setRecords] = useState(() => {
-        const cached = localStorage.getItem(`medical_card_${patientId}`);
-        return cached ? JSON.parse(cached).records : [];
-    });
+    const [patient, setPatient] = useState(null);
+    const [records, setRecords] = useState([]);
+
 
     const [open, setOpen] = useState(true);
     const [expandedRecords, setExpandedRecords] = useState([]);
@@ -23,29 +20,21 @@ export default function PatientMedicalCard() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
 
-
     useEffect(() => {
-        const fetchMedicalCard = async () => {
+        const fetchData = async () => {
             try {
                 const res = await API.get(`/doctor/view/patient/${patientId}/medical-card`);
+
                 setPatient(res.data.patient);
                 setRecords(res.data.medical_records);
-                    console.log("Med card", res.data.medical_records)
-                // --- Зберігаємо у кеш localStorage ---
-                localStorage.setItem(
-                    `medical_card_${patientId}`,
-                    JSON.stringify({
-                        timestamp: Date.now(),
-                        patient: res.data.patient,
-                        records: res.data.medical_records,
-                    })
-                );
+                console.log(res.data.patient);
+
             } catch (error) {
                 console.error(error);
             }
         };
 
-        fetchMedicalCard();
+        fetchData();
     }, [patientId]);
 
     const toggleRecord = (id) => {
@@ -67,8 +56,10 @@ export default function PatientMedicalCard() {
             {/* --- Блок інформації про пацієнта --- */}
             <div className="patient-info-block">
                 <h2>Інформація про пацієнта</h2>
+
                 <div className="patient-meta">
-          <span>
+
+                    <span>
             <b>Пацієнт:</b> {patient.last_name} {patient.first_name} {patient.middle_name}
           </span>
                     <span><b>Дата народження:</b> {patient.date_of_birth}</span>
@@ -76,7 +67,9 @@ export default function PatientMedicalCard() {
                     <span><b>Email:</b> {patient.email}</span>
                     <span><b>Адреса проживання:</b>{patient.address}</span>
                     <span><b>Нотатки до пацієнта:</b>{patient.notes}</span>
+
                 </div>
+
             </div>
 
             {/* --- Акордеон з медичною карткою --- */}
@@ -126,18 +119,18 @@ export default function PatientMedicalCard() {
                                         <div className="timeline-content">
                                             <div className="timeline-header">
                                                 <div className="doctor-info">
-                          {/*<span className="doctor">*/}
-                          {/*  {record.doctor_specialization}: {doctorName}*/}
-                          {/*</span>*/}
-                                                    <span>{" "}
-                                                        {patient.family_doctor ? (
-                                                            <>
-                                                                <b>{patient.family_doctor.specialization}</b>:{" "}
-                                                                {patient.family_doctor.last_name} {patient.family_doctor.first_name}
-                                                            </>
-                                                        ) : (
-                                                            "Не вказано"
-                                                        )}
+                                                    {/*<span className="doctor">*/}
+                                                    {/*  {record.doctor_specialization}: {doctorName}*/}
+                                                    {/*</span>*/}
+                                                    <span>
+    {record.appointment?.doctor ? (
+        <>
+            <b>{record.appointment.doctor.specialization?.name}</b>:{" "}
+            {record.appointment.doctor.last_name} {record.appointment.doctor.first_name}
+        </>
+    ) : (
+        "Не вказано"
+    )}
 </span>
                                                     <span className="date">{date}</span>
                                                 </div>
@@ -265,6 +258,8 @@ export default function PatientMedicalCard() {
                 record={editingRecord}
                 records={records}
             />
+
         </div>
+
     );
 }

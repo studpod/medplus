@@ -35,12 +35,12 @@ export default function MedicalRecordsSection({ records }) {
                     </p>
                 </div>
 
-                <span className="arrow">{open ? "−" : "+"}</span>
+
 
             </div>
 
             {/* BODY */}
-            {open && (
+
 
                 <div className="accordion-body">
 
@@ -214,7 +214,7 @@ export default function MedicalRecordsSection({ records }) {
 
                 </div>
 
-            )}
+
 
         </div>
     );

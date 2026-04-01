@@ -1,0 +1,70 @@
+.lab-container {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.lab-card {
+  width: 100%;
+  max-width: 500px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.lab-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.lab-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.lab-group label {
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #555;
+}
+
+.lab-input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.lab-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74,144,226,0.2);
+}
+
+.lab-button {
+  width: 100%;
+  padding: 12px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.lab-button:hover {
+  background: #357ab8;
+}
+
+.lab-button:disabled {
+  background: #a0a0a0;
+  cursor: not-allowed;
+}

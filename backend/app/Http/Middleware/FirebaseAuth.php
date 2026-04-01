@@ -34,12 +34,16 @@ class FirebaseAuth
             }
 
             $uid = $data['users'][0]['localId'];
+            $email = $data['users'][0]['email'];
             $user = User::where('firebase_uid', $uid)->first();
 
             if (!$user) {
                 return response()->json(['error' => 'User not found'], 401);
             }
 
+            $request->merge([
+                'firebase_email' => $email
+            ]);
             auth()->login($user);
 
             return $next($request);

@@ -19,6 +19,8 @@ return new class extends Migration
             $table->time('time');
             $table->boolean('is_online')->default(false);
             $table->enum('status', ['expected', 'completed', 'cancelled', 'no_show']);
+            $table->boolean('has_referral')->default(false);
+
             $table->timestamps();
         });
     }

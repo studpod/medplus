@@ -13,7 +13,9 @@ class Appointment extends Model
         'date',
         'time',
         'status',
-        'is_online'
+        'is_online',
+        'has_referral'
+
         ];
     public function patient()
     {

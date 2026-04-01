@@ -5,7 +5,7 @@ import { setDoc, doc, deleteDoc, collection, onSnapshot, addDoc } from "firebase
 import { toast } from "react-toastify";
 import VideoControls from "./VideoControls";
 import API from "../../../api";
-import "../../pages/video.scss";
+import "../../pages/video.module.scss";
 
 export default function VideoCall({ roomIdProp }) {
     const navigate = useNavigate();

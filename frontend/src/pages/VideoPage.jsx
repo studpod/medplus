@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
-import "../Staff/pages/video.scss";
+import "../Staff/pages/video.module.scss";
 
 export default function VideoPage() {
     const { room } = useParams();

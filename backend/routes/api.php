@@ -13,7 +13,7 @@ use App\Http\Controllers\Staff\Receptionist\MainReceptionistController;
 use App\Http\Controllers\PublicViewController;
 use App\Http\Controllers\VideoSessionController;
 use App\Models\User;
-
+use function Pest\Laravel\get;
 
 
 Route::middleware(['auth:'])->get('/user', function (Request $request) {
@@ -43,6 +43,7 @@ Route::group(['prefix' => 'public/view'], function () {
    });
    Route::get('/specializations', [PublicViewController::class, 'specializations']);
 
+
 });
 
 //Route::group(['prefix' => 'auth'], function () {
@@ -63,16 +64,16 @@ Route::group(['prefix' => 'public/view'], function () {
 Route::prefix('auth')->group(function () {
 
     Route::post('/sync', function(Request $request) {
-        $firebaseUser = $request->all(); // uid/email з React
 
-        if (!isset($firebaseUser['uid']) || !isset($firebaseUser['email'])) {
-            return response()->json(['error' => 'No Firebase user data provided'], 400);
+        $firebaseUser = $request->all();
+
+        if (!isset($firebaseUser['uid'])) {
+            return response()->json(['error' => 'No Firebase user data'], 400);
         }
 
         $user = User::firstOrCreate(
             ['firebase_uid' => $firebaseUser['uid']],
             [
-                'email' => $firebaseUser['email'],
                 'role' => 'patient',
             ]
         );
@@ -117,7 +118,7 @@ Route::middleware([FirebaseAuth::class, 'role:patient'])
 
         // Route::get('/dashboard', [PersonalOfficeController::class, 'dashboard']);
         Route::prefix('view')->group(function () {
-            Route::get('/me', [MainController::class, 'me']);
+//            Route::get('/me', [MainController::class, 'me']);
              Route::get('/profile',[PersonalOfficeController::class, 'viewProfile']); // api/patient/view/profile
              Route::get('/medical-records', [PersonalOfficeController::class, 'viewMedicalRecords']); // api/patient/view/medical-records
             Route::get('receptions', [PersonalOfficeController::class, 'viewReception']);
@@ -140,15 +141,25 @@ Route::middleware([FirebaseAuth::class, 'role:doctor'])
     ->group(function () {
        Route::prefix('view')->group(function (){
           Route::get('/schedule',[MainController::class, 'viewSchedule']);
+           Route::get('/me', [MainController::class, 'me']);
           Route::get('/appointments', [MainController::class, 'viewReception']);
           Route::get('/appointments/online', [MainController::class,'viewOnlineAppointments']);
            Route::get('/calendar', [MainController::class, 'calendar']);
+           Route::get('/specializations', [MainController::class, 'getSpecializations']);
+           Route::get('/profile', [MainController::class, 'getDoctorProfile']);
+           Route::get('/appointment/{id}', [MainController::class, 'getAppointment']);
+           Route::get('/appointment-service/{id}', [MainController::class, 'getAppointmentService']);
+           Route::get('/lab_test', [MainController::class, 'getLabTest']);
+           Route::get('appointment-services/by-patient/{patientId}', [MainController::class, 'getAppointmentServicesByPatient']
+           );
               Route::prefix('patient')->group(function(){
                   Route::get('/all', [MainController::class, 'viewPatients']);
                       Route::prefix('{patientId}')->group(function(){
                           Route::get('appointments', [MainController::class, 'getPatientAppointments']);
-                        Route::get('/medical-card', [MainController::class, 'viewMedicalCard']);
-                        Route::get('/labs-result', [MainController::class, 'viewLabsResult']);
+                          Route::get('/appointments/{appointmentId}', [MainController::class, 'getPatientAppointment']);
+                          Route::get('/medical-card', [MainController::class, 'viewMedicalCard']);
+                          Route::get('/labs-result', [MainController::class, 'viewLabsResult']);
+                          Route::get('/referrals', [MainController::class, 'getPatientReferrals']);
                       });
               });
 
@@ -160,12 +171,13 @@ Route::middleware([FirebaseAuth::class, 'role:doctor'])
                    Route::put('/{recordId}/update', [PatientMedicalController::class, 'updateMedicalCard']);
                });
            });
-           Route::prefix('video-call')->group(function(){
-           Route::post('/start', [MainController::class, 'startVideoCall']);
-           Route::put('/end', [MainController::class, 'endVideoCall']);
-           });
-           
-
+               Route::prefix('video-call')->group(function(){
+                   Route::post('/start', [MainController::class, 'startVideoCall']);
+                   Route::put('/end', [MainController::class, 'endVideoCall']);
+                 });
+               Route::post('/referrals', [MainController::class, 'addReferral']);
+           Route::post('/appointment-service/{appointment}/medical-record',[MainController::class, 'storeForAppointment']);
+           Route::post('/labs/create', [MainController::class, 'store']);
            Route::put('/update-status-appointment/{appointmentId}/cancelled', [MainController::class, 'updateStatusAppointment']);
        });
     });

@@ -1,86 +1,81 @@
 import { useState, useEffect } from "react";
 import API from "../../api";
 import "./Cabinet.scss";
-
+import CabinetSkeleton from "../../components/Skeletons/CabinetSkeleton";
 import PersonalSection from "../../components/Cabinet/PersonalSection";
 import MedicalRecordsSection from "../../components/Cabinet/MedicalRecordsSection";
+import CabinetTabs from "../../components/Cabinet/CabinetTabs";
+import AppointmentsSection from "../../components/Cabinet/AppointmentsSection";
+import {toast} from "react-toastify";
 
 export default function Cabinet() {
     const [patientData, setPatientData] = useState({});
     const [medicalRecords, setMedicalRecords] = useState([]);
     const [appointments, setAppointments] = useState([]);
+    const [activeTab, setActiveTab] = useState("personal");
     const [loading, setLoading] = useState(true);
 
+
     useEffect(() => {
-        const fetchProfile = async () => {
+        const fetchAll = async () => {
             try {
-                const profileRes = await API.get("/patient/view/profile");
-                setPatientData(profileRes.data.patient || {});
-            } catch (err) {
-                console.error("Помилка профілю", err);
-                setPatientData({});
+                const [profile, medical, receptions] = await Promise.all([
+                    API.get("/patient/view/profile"),
+                    API.get("/patient/view/medical-records"),
+                    API.get("/patient/view/receptions"),
+                ]);
+
+                setPatientData(profile.data.patient || {});
+                setMedicalRecords(medical.data.medical_records || []);
+                setAppointments(receptions.data.receptions || []);
+                console.log('Прийоми', receptions.data.receptions);
+                console.log(profile.data.patient);
+
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
             }
         };
 
-        const fetchMedical = async () => {
-            try {
-                const medicalRes = await API.get("/patient/view/medical-records");
-                setMedicalRecords(medicalRes.data.medical_records || []);
-            } catch (err) {
-                console.error("Помилка медичних записів", err);
-                setMedicalRecords([]);
-            }
-        };
-
-        const fetchAppointments = async () => {
-            try {
-                const res = await API.get("/patient/view/receptions");
-                setAppointments(res.data.receptions || []);
-            } catch (err) {
-                console.error("Помилка завантаження прийомів", err);
-                setAppointments([]);
-            }
-        };
-
-        Promise.all([fetchProfile(), fetchMedical(), fetchAppointments()])
-            .finally(() => setLoading(false));
+        fetchAll();
     }, []);
 
     const joinOnlineCall = (roomId) => {
+        if (!roomId) {
+            toast.error("Лікар ще не розпочав Онлайн консультацію. ");
+            return;
+        }
         window.open(`/patient/video/${roomId}`, "_blank");
     };
 
-    if (loading) return <p>Завантаження...</p>;
+    if (loading) return <CabinetSkeleton />;
 
     return (
         <div className="cabinet-page">
+
+            <CabinetTabs
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+            />
+
             <div className="cabinet-content">
-                <PersonalSection patientData={patientData} />
-                <MedicalRecordsSection records={medicalRecords} />
 
-                <div className="appointments-section">
-                    <h2>Мої прийоми</h2>
-                    {appointments.length === 0 && <p>Немає записів</p>}
+                {activeTab === "personal" && (
+                    <PersonalSection patientData={patientData} />
+                )}
 
-                    {appointments.map(app => (
-                        <div key={app.id} className="appointment-card">
-                            <div>
-                                <strong>Лікар: {app.doctor.user.first_name} {app.doctor.user.last_name}</strong>
-                                <p>Дата: {app.date} | Час: {app.time}</p>
-                                <p>Статус: {app.status}</p>
-                            </div>
+                {activeTab === "medical" && (
+                    <MedicalRecordsSection records={medicalRecords} />
+                )}
 
-                            {app.is_online && app.status === "expected" && (
-                                <button
-                                    className="join-btn"
-                                    onClick={() => joinOnlineCall(app.video_call?.room_id)}
-                                >
-                                    Підключитися до онлайн консультації
-                                </button>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                {activeTab === "appointments" && (
+                    <AppointmentsSection
+                        appointments={appointments}
+                        joinOnlineCall={joinOnlineCall}
+                    />
+                )}
+
             </div>
         </div>
     );

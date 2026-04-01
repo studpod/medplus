@@ -7,6 +7,7 @@ import {
     sendEmailVerification
 } from "firebase/auth";
 import "./Auth.scss";
+import {toast} from "react-toastify";
 
 export default function Auth({ setUser }) {
     const [activeTab, setActiveTab] = useState("login");
@@ -35,7 +36,8 @@ export default function Auth({ setUser }) {
                 firebaseUser = userCredential.user;
 
                 await sendEmailVerification(firebaseUser);
-                alert("На вашу пошту надіслано лист для підтвердження!");
+                toast.info("На вашу пошту надіслано лист для підтвердження!");
+
 
 
                 const userData = { uid: firebaseUser.uid, email: firebaseUser.email };
@@ -43,7 +45,7 @@ export default function Auth({ setUser }) {
                 setUser(userData);
 
 
-                navigate("/verify-email");
+                navigate("/");
                 return;
             }
 
@@ -55,7 +57,9 @@ export default function Auth({ setUser }) {
 
 
                 if (!firebaseUser.emailVerified) {
-
+                    toast.error("Ви повинні підтвердити свою пошту перед входом. Перевірте вашу пошту.");
+                    navigate("/auth");
+                    return;
                 }
 
 

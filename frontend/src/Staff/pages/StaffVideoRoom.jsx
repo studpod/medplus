@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import API from "../../api";
-import "./video.scss";
+import "./video.module.scss";
 
 export default function StaffVideoRoom() {
     const [appointments, setAppointments] = useState([]);

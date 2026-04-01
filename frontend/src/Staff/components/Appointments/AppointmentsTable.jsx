@@ -1,139 +1,130 @@
 import { Link } from "react-router-dom";
-import "../../styles/appointments.scss";
 import API from "../../../api";
-import { useState } from "react";
 
-export default function AppointmentsTable({ receptions, setReceptions }) {
-    const [loadingIds, setLoadingIds] = useState([]);
+export default function AppointmentsTable({ receptions, refresh }) {
 
-    const formatDate = (date) => {
-        if (!date) return "-";
-        const d = new Date(date);
-        const day = String(d.getDate()).padStart(2, "0");
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const year = d.getFullYear();
-        return `${day}.${month}.${year}`;
-    };
-
-    const formatTime = (time) => {
-        if (!time) return "-";
-        return time.slice(0, 5);
-    };
-
-    const getDisplayStatus = (appointment) => {
-        const lastLog = appointment.status_logs?.[appointment.status_logs.length - 1];
-        const currentStatus = lastLog?.new_status || appointment.status;
-
-        switch (currentStatus) {
-            case "expected":
-                return { label: "Очікування", class: "status-expected" };
-
-            case "completed":
-            case "closed":
-                return { label: "Закритий", class: "status-completed" };
-
-            case "cancelled":
-                return {
-                    label: "Відмінено пацієнтом",
-                    class: "status-cancelled",
-                    warning: true,
-                    tooltip: "Пацієнт відмінив прийом"
-                };
-
-            case "no_show":
-                return {
-                    label: "Пацієнт не з’явився",
-                    class: "status-cancelled",
-                    warning: true,
-                    tooltip: "Пацієнт не прийшов на прийом"
-                };
-
-            default:
-                return { label: currentStatus, class: "" };
-        }
-    };
-
-    const markNoShow = async (appointmentId) => {
+    const updateStatus = async (id, status) => {
         try {
-            setLoadingIds(prev => [...prev, appointmentId]);
-            const res = await API.put(`/doctor/control/update-status-appointment/${appointmentId}/cancelled`);
-
-            setReceptions(prev =>
-                prev.map(r =>
-                    r.id === appointmentId
-                        ? { ...r, status: "no_show", status_logs: res.data.logs }
-                        : r
-                )
+            await API.put(
+                `/doctor/control/update-status-appointment/${id}/cancelled`
             );
 
-            localStorage.removeItem("receptions_list");
+            refresh();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+    const formatTime = (time) => {
+        if (!time) return "";
 
-        } catch (err) {
-            console.error("Помилка при відмітці неявки:", err);
-        } finally {
-            setLoadingIds(prev => prev.filter(id => id !== appointmentId));
+        return time.slice(0, 5); // HH:MM
+    };
+
+    const formatDate = (date) => {
+        if (!date) return "";
+
+        const d = new Date(date);
+
+        const day = String(d.getDate()).padStart(2, "0");
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const year = String(d.getFullYear()).slice(-2);
+
+        return `${day}.${month}.${year}`;
+    };
+    const getStatus = (status) => {
+        switch (status) {
+            case "expected":
+                return { label: "Очікується", class: "status expected" };
+            case "completed":
+                return { label: "Завершено", class: "status done" };
+            case "cancelled":
+                return { label: "Скасовано", class: "status cancel" };
+            case "no_show":
+                return { label: "Не з’явився", class: "status no-show" };
+            case "closed":
+                return { label: "Закритий", class: "status closed" };
+            default:
+                return { label: status, class: "status" };
         }
     };
 
-    if (!receptions.length) {
-        return <div className="appointments-empty">Прийомів немає</div>;
-    }
-
     return (
-        <div className="appointments-page">
-            <div className="appointments-header">
-                <h2>Прийоми</h2>
+        <div className="appointments-table">
+
+            <div className="table-header">
+                <div>Пацієнт</div>
+                <div>Дата</div>
+                <div>Послуги</div>
+                <div>Статус</div>
+                <div>Дії</div>
             </div>
 
-            <div className="appointments-card">
-                <table className="appointments-table">
-                    <thead>
-                    <tr>
-                        <th>Пацієнт</th>
-                        <th>Дата</th>
-                        <th>Час</th>
-                        <th>Статус</th>
-                        <th>Дії</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {receptions.map((r) => {
-                        const display = getDisplayStatus(r);
-                        const isNoShowBtn = r.status === "expected";
+            {receptions.map(r => {
+                const status = getStatus(r.status);
 
-                        return (
-                            <tr key={r.id}>
-                                <td>{r.patient ? `${r.patient.last_name} ${r.patient.first_name}` : "Не вказано"}</td>
-                                <td>{formatDate(r.date)}</td>
-                                <td>{formatTime(r.time)}</td>
-                                <td className="status-cell">
-                                        <span className={`status ${display.class}`} title={display.tooltip || ""}>
-                                            {display.label} {display.warning ? "!" : ""}
-                                        </span>
-                                </td>
-                                <td className="actions-cell">
-                                    {r.patient && (
-                                        <Link to={`/staff/patient/${r.patient.id}/medical-card`}>
-                                            <button className="view-btn">Медична картка</button>
-                                        </Link>
-                                    )}
-                                    {isNoShowBtn && (
-                                        <button
-                                            className="no-show-btn"
-                                            disabled={loadingIds.includes(r.id)}
-                                            title="Позначити, що пацієнт не з’явився на прийом"
-                                            onClick={() => markNoShow(r.id)}
-                                        >
-                                            Не з’явився
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                    </tbody>
-                </table>
-            </div>
+                return (
+                    <div key={r.id} className="table-row">
+
+                        {/* Пацієнт */}
+                        <div className="patient">
+                            <div className="avatar">👤</div>
+
+                            <div>
+                                <div className="name">
+                                    {r.patient.last_name} {r.patient.first_name}
+                                </div>
+                                <div className="time">
+                                    🕒 {formatTime(r.time)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Дата */}
+                        <div className="date">
+                            📅 {formatDate(r.date)}
+                        </div>
+
+                        {/* Послуги */}
+                        <div className="services">
+                            {r.appointment_services?.map(s => (
+                                <span key={s.id} className="service-tag">
+                                    {s.service?.name}
+                                </span>
+                            ))}
+                        </div>
+
+                        {/* Статус */}
+                        <div>
+                            <span className={status.class}>
+                                {status.label}
+                            </span>
+                        </div>
+
+                        {/* Дії */}
+                        <div className="actions">
+
+                            <Link
+                                to={`/staff/appointments/${r.id}`}
+                                className="btn open"
+                            >
+                                Відкрити
+                            </Link>
+
+                            {r.status === "expected" && (
+                                <button
+                                    className="btn danger"
+                                    onClick={() => updateStatus(r.id, "no_show")}
+                                >
+                                    Не з’явився
+                                </button>
+                            )}
+
+                        </div>
+
+                    </div>
+                );
+            })}
+
         </div>
     );
 }

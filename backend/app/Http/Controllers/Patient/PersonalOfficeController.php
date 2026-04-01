@@ -11,7 +11,7 @@ use App\Models\{Patient, User, MedicalRecord, Appointment, LabsResult,LabsFile, 
 class PersonalOfficeController extends Controller
 {
 
-    public function viewProfile()
+    public function viewProfile(Request $request)
     {
         $user = Auth::user();
 
@@ -21,15 +21,20 @@ class PersonalOfficeController extends Controller
 
         $patient = $user->patient;
 
-        // Если профиля нет — возвращаем пустой объект
+
         if (!$patient) {
             return response()->json([
                 'patient' => null
             ], 200);
         }
-
+        if ($patient) {
+            $patient->email = $request->get('firebase_email');
+        }
+        $patient->load('doctor');
         return response()->json([
-            'patient' => $patient
+            'patient' => $patient,
+            'updated_at' => $patient->updated_at
+
         ], 200);
     }
 
@@ -101,6 +106,8 @@ class PersonalOfficeController extends Controller
             'gender' => 'sometimes|in:male,female',
             'date_of_birth' => 'sometimes|date',
             'phone' => 'sometimes|string|max:13|unique:patients,phone,' . $patient->id,
+            'notes' => 'nullable|string',
+            'address' => 'nullable|string',
         ]);
 
         $patient->update($validated);
@@ -187,7 +194,8 @@ class PersonalOfficeController extends Controller
             ->with([
                 'doctor.user',
                 'doctor.specialization',
-                'videoCall'
+                'videoCall',
+                'services'
             ])
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc')

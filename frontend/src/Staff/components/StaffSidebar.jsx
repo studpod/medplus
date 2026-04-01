@@ -1,17 +1,31 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 
-export default function StaffSidebar() {
+export default function StaffSidebar({ user }) {
     const [collapsed, setCollapsed] = useState(false);
     const location = useLocation();
 
     const toggleSidebar = () => setCollapsed(!collapsed);
 
+    const specialization = user?.doctor?.specialization?.name;
+
+    const isFamilyDoctor = specialization === "Сімейний лікар";
+
     const links = [
         { to: "/staff", label: "Dashboard", icon: "fas fa-home" },
         { to: "/staff/appointments", label: "Прийоми", icon: "fas fa-calendar-check" },
-        { to: "/staff/patients", label: "Пацієнти", icon: "fas fa-user-injured" },
-        { to: "/staff/video", label: "Онлайн консультація", icon: "fas fa-flask" },
+
+        ...(isFamilyDoctor
+                ? [
+                    { to: "/staff/patients", label: "Пацієнти", icon: "fas fa-user-injured" },
+                    { to: "/staff/video", label: "Онлайн консультація", icon: "fas fa-video" },
+                    { to: "/staff/analyses", label: "Аналізи пацієнтів", icon: "fas fa-flask" },
+                ]
+                : [
+                    { to: "/staff/analyses", label: "Аналізи", icon: "fas fa-flask" },
+                ]
+        ),
+
         { to: "/staff/settings", label: "Налаштування", icon: "fas fa-cog" },
     ];
 

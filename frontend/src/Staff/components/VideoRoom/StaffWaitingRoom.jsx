@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import VideoCall from "./VideoCall";
-import "../../../Staff/pages/video.scss";
+import "../../pages/video.module.scss";
 
 export default function StaffWaitingRoom() {
     const { patientId } = useParams();

@@ -18,4 +18,8 @@ class Service extends Model
     {
         return $this->belongsTo(Doctor::class);
     }
+    public function labs()
+    {
+        return $this->hasMany(LabsResult::class);
+    }
 }

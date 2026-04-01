@@ -32,8 +32,8 @@ class PatientMedicalController extends Controller
             'treatment'       => 'required|string',
             'prescriptions'   => 'nullable|string',
             'notes'           => 'nullable|string',
-            'start_date'      => 'nullable|date',
-            'end_date'        => 'nullable|date|after_or_equal:start_date',
+//            'start_date'      => 'nullable|date',
+//            'end_date'        => 'nullable|date|after_or_equal:start_date',
         ]);
 
         $patient = Patient::find($patientId);
@@ -77,26 +77,26 @@ class PatientMedicalController extends Controller
             'treatment' => $validated['treatment'],
             'prescriptions' => $validated['prescriptions'] ?? null,
             'notes' => $validated['notes'] ?? null,
-            'start_date' => $validated['start_date'] ?? now(),
-            'end_date' => $validated['end_date'] ?? null,
+//            'start_date' => $validated['start_date'] ?? now(),
+//            'end_date' => $validated['end_date'] ?? null,
         ]);
 
         // --------------- оновлення статус прийому ---------------
         $oldStatus = $appointment->status;
-        $appointment->status = 'closed';
+        $appointment->status = 'completed';
         $appointment->save();
 
 
         AppointmentStatusLog::create([
             'appointment_id' => $appointment->id,
             'old_status'     => $oldStatus,
-            'new_status'     => 'closed',
+            'new_status'     => 'completed',
             'changed_by'     => $user->id,
         ]);
 
 
         Cache::forget("doctor:{$doctor->id}:patient:{$patientId}:medical-card");
-        Cache::forget("doctor:{$doctor->id}:appointments"); // <-- додаємо кеш для прийомів лікаря
+        Cache::forget("doctor:{$doctor->id}:appointments");
 
         return response()->json([
             'message' => 'Запис у медичну карту успішно створено, статус прийому оновлено',
