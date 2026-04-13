@@ -36,6 +36,8 @@ import StaffWaitingRoom from "./Staff/components/VideoRoom/StaffWaitingRoom";
 import PrivateRoute from "../src/context/PrivateRoute";
 
 import { ToastContainer } from "react-toastify";
+import { signOut } from "firebase/auth";
+import { auth } from "./firebase"
 
 function AppWrapper() {
     return (
@@ -62,17 +64,15 @@ function App() {
         !location.pathname.startsWith("/staff") &&
         !location.pathname.startsWith("/patient/video");
 
-    const handleLogout = () => {
-        setUser(null);
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
+    const handleLogout = async () => {
+        await signOut(auth);
     };
 
     return (
-        <div className="app-layout"> {/* 🔥 ІЗОЛЯЦІЯ СТИЛІВ */}
+        <div className="app-layout">
             {showHeader && <Header user={user} onLogout={handleLogout} />}
 
-            <div className="page-container"> {/* 🔥 ІЗОЛЯЦІЯ */}
+            <div className="page-container">
                 <Routes>
                     {/* ПАЦІЄНТ */}
                     <Route path="/" element={<Home user={user} />} />

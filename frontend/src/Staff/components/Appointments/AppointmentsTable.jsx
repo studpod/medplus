@@ -79,12 +79,12 @@ export default function AppointmentsTable({ receptions, refresh }) {
                             </div>
                         </div>
 
-                        {/* Дата */}
+
                         <div className="date">
                             📅 {formatDate(r.date)}
                         </div>
 
-                        {/* Послуги */}
+
                         <div className="services">
                             {r.appointment_services?.map(s => (
                                 <span key={s.id} className="service-tag">
@@ -93,14 +93,14 @@ export default function AppointmentsTable({ receptions, refresh }) {
                             ))}
                         </div>
 
-                        {/* Статус */}
+
                         <div>
                             <span className={status.class}>
                                 {status.label}
                             </span>
                         </div>
 
-                        {/* Дії */}
+
                         <div className="actions">
 
                             <Link

@@ -5,14 +5,11 @@ import { onAuthStateChanged } from "firebase/auth";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(
-        JSON.parse(localStorage.getItem("user"))
-    );
+    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-
             if (firebaseUser) {
                 try {
                     const token = await firebaseUser.getIdToken();
@@ -29,20 +26,18 @@ export function AuthProvider({ children }) {
                         }),
                     });
 
-                    if (res.ok) {
-                        const userFromBackend = await res.json();
+                    if (!res.ok) throw new Error("Sync failed");
 
-                        const fullUser = {
-                            ...userFromBackend,
-                            firebaseEmailVerified: firebaseUser.emailVerified,
-                        };
+                    const userFromBackend = await res.json();
 
-                        setUser(fullUser);
-                        localStorage.setItem("user", JSON.stringify(fullUser));
-                        localStorage.setItem("token", token);
-                    } else {
-                        setUser(null);
-                    }
+                    const fullUser = {
+                        ...userFromBackend,
+                        firebaseEmailVerified: firebaseUser.emailVerified,
+                    };
+
+                    setUser(fullUser);
+                    localStorage.setItem("user", JSON.stringify(fullUser));
+                    localStorage.setItem("token", token);
 
                 } catch (e) {
                     console.error(e);
@@ -61,7 +56,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, setUser, loading }}>
+        <AuthContext.Provider value={{ user, loading }}>
             {children}
         </AuthContext.Provider>
     );

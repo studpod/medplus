@@ -7,9 +7,9 @@ import {
     sendEmailVerification
 } from "firebase/auth";
 import "./Auth.scss";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 
-export default function Auth({ setUser }) {
+export default function Auth() {
     const [activeTab, setActiveTab] = useState("login");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -22,83 +22,44 @@ export default function Auth({ setUser }) {
         setError("");
 
         try {
-            let userCredential;
-            let firebaseUser;
-
             if (activeTab === "register") {
                 if (password !== passwordConfirm) {
                     setError("Паролі не співпадають");
                     return;
                 }
 
-
-                userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                firebaseUser = userCredential.user;
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const firebaseUser = userCredential.user;
 
                 await sendEmailVerification(firebaseUser);
-                toast.info("На вашу пошту надіслано лист для підтвердження!");
-
-
-
-                const userData = { uid: firebaseUser.uid, email: firebaseUser.email };
-                localStorage.setItem("user", JSON.stringify(userData));
-                setUser(userData);
-
+                toast.info("На пошту надіслано лист підтвердження");
 
                 navigate("/");
                 return;
             }
 
             if (activeTab === "login") {
-
-                userCredential = await signInWithEmailAndPassword(auth, email, password);
-                firebaseUser = userCredential.user;
-                console.log("Email verified:", firebaseUser.emailVerified);
-
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const firebaseUser = userCredential.user;
 
                 if (!firebaseUser.emailVerified) {
-                    toast.error("Ви повинні підтвердити свою пошту перед входом. Перевірте вашу пошту.");
-                    navigate("/auth");
+                    toast.error("Підтверди пошту перед входом");
                     return;
                 }
 
-
-                const idToken = await firebaseUser.getIdToken();
-
-
-                const syncResponse = await fetch("http://localhost:8000/api/auth/sync", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        uid: firebaseUser.uid,
-                        email: firebaseUser.email,
-                    }),
-                });
-
-                if (!syncResponse.ok) throw new Error("Sync error");
-
-                const userFromBackend = await syncResponse.json();
-
-
-                localStorage.setItem("user", JSON.stringify(userFromBackend));
-                localStorage.setItem("token", idToken);
-                setUser(userFromBackend);
 
                 navigate("/");
             }
 
         } catch (err) {
             console.error(err);
-            setError(err.message || "Помилка сервера");
+            setError(err.message || "Помилка");
         }
     };
 
     return (
         <div className="auth">
             <div className="auth__container">
-                {/* Вкладки */}
                 <div className="auth__tabs">
                     <button
                         className={activeTab === "login" ? "active" : ""}
@@ -116,7 +77,6 @@ export default function Auth({ setUser }) {
                     </button>
                 </div>
 
-                {/* Форма */}
                 <form className="auth__form" onSubmit={handleSubmit}>
                     <input
                         type="email"
@@ -132,6 +92,7 @@ export default function Auth({ setUser }) {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
+
                     {activeTab === "register" && (
                         <input
                             type="password"
@@ -141,7 +102,9 @@ export default function Auth({ setUser }) {
                             required
                         />
                     )}
+
                     {error && <p className="auth__error">{error}</p>}
+
                     <button type="submit" className="auth__btn">
                         {activeTab === "login" ? "Увійти" : "Зареєструватись"}
                     </button>

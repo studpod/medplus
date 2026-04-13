@@ -153,34 +153,144 @@ class MainController extends Controller
             return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
         }
 
-        // ❗ ВАЖНО: проверь правильное поле
-        $isFamilyDoctor = $doctor->specialization && $doctor->specialization->name === 'Сімейни лікар';
-
-        $query = Patient::query();
+        $isFamilyDoctor = optional($doctor->specialization)->name === 'Сімейний лікар';
 
         if ($isFamilyDoctor) {
-            // 🔹 семейный врач — только свои пациенты
-            $patients = $query
-                ->with('user')
+            $patients = Patient::with('user')
                 ->where('doctor_id', $doctor->id)
-                ->orderBy('last_name', 'asc')
-                ->orderBy('first_name', 'asc')
+                ->orderBy('last_name')
+                ->orderBy('first_name')
                 ->get();
         } else {
-            // 🔹 узкий специалист — ограниченные данные
-            $patients = $query
-                ->select('id', 'first_name', 'last_name', 'middle_name', 'date_of_birth')
-                ->orderBy('last_name', 'asc')
-                ->orderBy('first_name', 'asc')
+            $patients = Patient::with('user')
+            ->orderBy('last_name')
+                ->orderBy('first_name')
                 ->get();
         }
 
+
+        $uids = $patients
+            ->pluck('user.firebase_uid')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $emailsMap = [];
+
+        if (!empty($uids)) {
+            try {
+                $factory = (new Factory)
+                    ->withServiceAccount(storage_path('/firebase/medplus-auth-fb352-firebase-adminsdk-fbsvc-9dc637fc58.json'));
+
+                $auth = $factory->createAuth();
+
+
+                $firebaseUsers = $auth->getUsers($uids);
+
+                foreach ($firebaseUsers as $fbUser) {
+                    $emailsMap[$fbUser->uid] = $fbUser->email;
+                }
+
+            } catch (\Exception $e) {
+                \Log::error("Firebase batch error: " . $e->getMessage());
+            }
+        }
+
+
+        $patients = $patients->map(function ($p) use ($emailsMap) {
+            return [
+                'id' => $p->id,
+                'first_name' => $p->first_name,
+                'last_name' => $p->last_name,
+                'middle_name' => $p->middle_name,
+                'date_of_birth' => $p->date_of_birth,
+                'phone' => $p->phone,
+
+                'email' => $p->user && isset($emailsMap[$p->user->firebase_uid])
+                    ? $emailsMap[$p->user->firebase_uid]
+                    : null,
+            ];
+        });
+
         return response()->json([
             'doctor_id' => $doctor->id,
+            'patients' => $patients,
+            'is_family_doctor' => $isFamilyDoctor
+        ]);
+    }
+    public function searchPatient(Request $request)
+    {
+        $query = $request->query('query');
+
+        if (!$query || mb_strlen($query) < 3) {
+            return response()->json([
+                'patients' => []
+            ]);
+        }
+
+        $patients = Patient::with('user')
+            ->whereNull('doctor_id')
+            ->whereRaw("
+            LOWER(CONCAT(last_name, ' ', first_name, ' ', middle_name)) LIKE ?
+        ", ['%' . mb_strtolower($query) . '%'])
+            ->orderBy('last_name')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
             'patients' => $patients
         ]);
     }
+    public function assignPatient(Request $request)
+    {
+        $user = auth()->user();
 
+        if ($user->role !== 'doctor') {
+            return response()->json(['error' => 'Тільки для лікаря'], 403);
+        }
+
+        $doctor = $user->doctor;
+
+        if (!$doctor) {
+            return response()->json(['error' => 'Доктор не знайдений'], 404);
+        }
+
+        $patientId = $request->query('patient_id');
+
+        $patient = Patient::find($patientId);
+
+        if (!$patient) {
+            return response()->json(['error' => 'Пацієнт не знайдений'], 404);
+        }
+
+        if ($patient->doctor_id) {
+            return response()->json(['error' => 'Пацієнт вже має лікаря'], 400);
+        }
+
+
+        $isFamilyDoctor = optional($doctor->specialization)->name === 'Сімейний лікар';
+
+        if (!$isFamilyDoctor) {
+            return response()->json(['error' => 'Тільки сімейний лікар може додавати'], 403);
+        }
+
+
+        $limit = 50;
+
+        $currentCount = Patient::where('doctor_id', $doctor->id)->count();
+
+        if ($currentCount >= $limit) {
+            return response()->json(['error' => 'Ліміт досягнуто'], 400);
+        }
+
+        $patient->doctor_id = $doctor->id;
+        $patient->save();
+
+        return response()->json([
+            'message' => 'Пацієнта додано'
+        ]);
+    }
     public function viewMedicalCard($patientId)
     {
         $user = auth()->user();
@@ -306,7 +416,7 @@ class MainController extends Controller
             ], 403);
         }
 
-        $doctor = Doctor::with('specialization') // 🔥 ВАЖЛИВО
+        $doctor = Doctor::with('specialization')
         ->where('user_id', $user->id)
             ->first();
 
@@ -473,7 +583,7 @@ class MainController extends Controller
             return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
         }
 
-        // 🔥 ПЕРЕВІРКА: тільки сімейний лікар
+
         if (!$doctor->specialization || $doctor->specialization->name !== 'Сімейний лікар') {
             return response()->json([
                 'error' => 'Тільки сімейний лікар може створювати направлення'
@@ -593,7 +703,7 @@ class MainController extends Controller
     {
         $user = auth()->user();
 
-        // 🔹 проверка роли
+
         if ($user->role !== 'doctor') {
             return response()->json(['error' => 'Доступ тільки для лікарів'], 403);
         }
@@ -604,10 +714,10 @@ class MainController extends Controller
             return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
         }
 
-        // 🔹 получаем специализацию врача
+
         $specializationId = $doctor->specialization_id;
 
-        // 🔹 получаем только lab_test услуги этой специализации
+
         $services = Service::where('type', 'lab_test')
             ->where('specialization_id', $specializationId)
             ->get();
@@ -657,7 +767,7 @@ class MainController extends Controller
             ->whereHas('service', function ($query) {
                 $query->where('type', 'lab_test');
             })
-            // ❗ исключаем уже созданные анализы
+
             ->whereDoesntHave('labsResults')
             ->get();
 

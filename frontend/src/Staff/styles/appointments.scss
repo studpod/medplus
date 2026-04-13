@@ -371,7 +371,7 @@
   color: #6b7280;
 }
 
-/* SERVICES */
+
 
 .services {
   display: flex;
@@ -386,7 +386,6 @@
   font-size: 12px;
 }
 
-/* STATUS */
 
 .status {
   padding: 6px 10px;
@@ -425,8 +424,6 @@
   color: #252f3b;
 }
 
-/* ACTIONS */
-
 .actions {
   display: flex;
   gap: 10px;
@@ -457,4 +454,65 @@
 
 .btn.danger:hover {
   background: #dc2626;
+}
+
+
+/* =========================
+   SKELETON LOADER
+========================= */
+
+.appointments-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr 1fr 2fr;
+  gap: 10px;
+  padding: 15px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+}
+
+.sk {
+  height: 14px;
+  border-radius: 8px;
+  background: linear-gradient(
+                  90deg,
+                  #eee 25%,
+                  #f5f5f5 37%,
+                  #eee 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.2s ease infinite;
+}
+
+.sk-patient {
+  height: 40px;
+  border-radius: 10px;
+}
+
+.sk-date {
+  width: 80%;
+}
+
+.sk-services {
+  height: 20px;
+}
+
+.sk-status {
+  width: 60%;
+}
+
+.sk-actions {
+  height: 30px;
+  width: 90%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }

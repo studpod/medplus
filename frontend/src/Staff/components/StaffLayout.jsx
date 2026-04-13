@@ -11,15 +11,22 @@ export default function StaffLayout({ setUser }) {
     useEffect(() => {
         API.get("/doctor/view/me")
             .then(res => {
-                setLocalUser(res.data);
-                setUser(res.data);
+                const data = res.data;
+
+
+                const formattedUser = {
+                    ...data.user,
+                    doctor: data.doctor
+                };
+
+                setLocalUser(formattedUser);
+                setUser(formattedUser);
             })
             .catch(err => console.log(err));
     }, [setUser]);
 
     return (
         <div className="staff-layout">
-            {/* Sidebar працює навіть якщо user ще null */}
             <StaffSidebar user={user} />
 
             <div className="staff-main">

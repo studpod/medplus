@@ -50,7 +50,7 @@ export default function AppointmentDetailsPage() {
     return (
         <div className="appointment-page">
 
-            {/* 🔝 ІНФО */}
+
             <div className="card info-card">
 
                 <div className="info-header">
@@ -86,42 +86,55 @@ export default function AppointmentDetailsPage() {
 
             </div>
 
-            {/* 📦 ПОСЛУГИ */}
+
             <div className="card services-card">
                 <div className="card-title">Послуги</div>
 
                 <div className="services-list">
-                    {appointment.appointment_services.map(item => (
-                        <div key={item.id} className="service-row">
+                    {appointment.appointment_services.map(item => {
+                        const isLab = item.service?.type === "lab_test";
+                        const hasLab = item.labs_results && item.labs_results.length > 0;
 
-                            <div>
-                                <div className="service-name">
-                                    {item.service?.name}
+                        return (
+                            <div key={item.id} className="service-row">
+
+                                <div>
+                                    <div className="service-name">
+                                        {item.service?.name}
+                                    </div>
+
+                                    <div className="service-type">
+                                        {isLab ? "Аналіз" : "Консультація"}
+                                    </div>
                                 </div>
 
-                                <div className="service-type">
-                                    {item.service?.type === "consultation"
-                                        ? "Консультація"
-                                        : "Аналіз"}
+                                <div className="service-status">
+
+
+                                    {isLab ? (
+                                        hasLab ? (
+                                            <span className="done">✅</span>
+                                        ) : (
+                                            <button
+                                                className="add-lab-btn"
+                                                onClick={() =>
+                                                    navigate(`/staff/analyses/${item.id}`)
+                                                }
+                                            >
+                                                ➕ Додати
+                                            </button>
+                                        )
+                                    ) : (
+
+                                        appointment.medical_record ? "✅" : "⏳"
+                                    )}
+
                                 </div>
                             </div>
-
-                            <div className="service-status">
-                                {item.service?.type === "consultation" ? (
-                                    appointment.medical_record ? "✅" : "⏳"
-                                ) : item.service?.type === "lab_test" ? (
-                                    item.labs_results && item.labs_results.length > 0 ? "✅" : "⏳"
-                                ) : (
-                                    "—"
-                                )}
-                            </div>
-
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
-
-            {/* ✅ ЄДИНА ФОРМА */}
             <ConsultationBlock
                 appointment={appointment}
                 refresh={fetchData}

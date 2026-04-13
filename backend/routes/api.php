@@ -153,6 +153,8 @@ Route::middleware([FirebaseAuth::class, 'role:doctor'])
            Route::get('appointment-services/by-patient/{patientId}', [MainController::class, 'getAppointmentServicesByPatient']
            );
               Route::prefix('patient')->group(function(){
+                  Route::get('/search', [MainController::class, 'searchPatient']);
+
                   Route::get('/all', [MainController::class, 'viewPatients']);
                       Route::prefix('{patientId}')->group(function(){
                           Route::get('appointments', [MainController::class, 'getPatientAppointments']);
@@ -165,6 +167,7 @@ Route::middleware([FirebaseAuth::class, 'role:doctor'])
 
        });
        Route::prefix('control')->group(function(){
+           Route::get('/patient/assign', [MainController::class, 'assignPatient']);
            Route::prefix('patient/{patientId}')->group(function(){
                Route::prefix('medical-card')->group(function(){
                    Route::post('/add', [PatientMedicalController::class, 'addMedicalCard']);
