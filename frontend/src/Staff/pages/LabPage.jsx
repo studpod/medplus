@@ -2,16 +2,23 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import API from "../../api";
 import "../styles/labForm.scss";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 
 export default function LabPage() {
     const { appointmentServiceId } = useParams();
-
     const isFromAppointment = !!appointmentServiceId;
 
     const [loading, setLoading] = useState(false);
     const [patients, setPatients] = useState([]);
     const [appointmentServices, setAppointmentServices] = useState([]);
+
+    const [form, setForm] = useState({
+        patient_id: "",
+        appointment_service_id: "",
+        labNumber: "",
+        files: []
+    });
+
     const formatDateTime = (dateString, timeString) => {
         if (!dateString) return "";
 
@@ -21,30 +28,20 @@ export default function LabPage() {
         const mm = String(date.getMonth() + 1).padStart(2, "0");
         const yyyy = date.getFullYear();
 
-        const formattedDate = `${dd}.${mm}.${yyyy}`;
-
         let formattedTime = "";
         if (timeString) {
             const [h, m] = timeString.split(":");
             formattedTime = `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
         }
 
-        return `${formattedDate} ${formattedTime}`;
+        return `${dd}.${mm}.${yyyy} ${formattedTime}`;
     };
-    const [form, setForm] = useState({
-        patient_id: "",
-        appointment_service_id: "",
-        labNumber: "",
-        files: []
-    });
 
-    // 🔹 загрузка пациентов
     useEffect(() => {
         API.get("/doctor/view/patient/all")
             .then(res => setPatients(res.data.patients || []));
     }, []);
 
-    // 🔹 загрузка анализов пациента
     useEffect(() => {
         if (!form.patient_id) return;
 
@@ -52,7 +49,6 @@ export default function LabPage() {
             .then(res => setAppointmentServices(res.data.services || []));
     }, [form.patient_id]);
 
-    // 🔹 если пришли с приема
     useEffect(() => {
         if (!appointmentServiceId) return;
 
@@ -70,16 +66,30 @@ export default function LabPage() {
 
     }, [appointmentServiceId]);
 
-    // 🔹 изменения
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
+
     const handleFiles = (e) => {
-        setForm({ ...form, files: e.target.files });
+        const newFiles = Array.from(e.target.files);
+
+        setForm(prev => ({
+            ...prev,
+            files: [...prev.files, ...newFiles]
+        }));
+
+        e.target.value = null;
     };
 
-    // 🔹 отправка
+
+    const removeFile = (index) => {
+        setForm(prev => ({
+            ...prev,
+            files: prev.files.filter((_, i) => i !== index)
+        }));
+    };
+
     const submit = async () => {
         setLoading(true);
 
@@ -88,23 +98,18 @@ export default function LabPage() {
 
             data.append("patient_id", form.patient_id);
             data.append("labNumber", form.labNumber);
-
-            // 🔥 ВСЕГДА отправляем это поле
             data.append("appointment_service_id", form.appointment_service_id);
 
-            if (form.files.length) {
-                for (let file of form.files) {
-                    data.append("files[]", file);
-                }
-            }
+            form.files.forEach(file => {
+                data.append("files[]", file);
+            });
 
             await API.post("/doctor/control/labs/create", data);
 
-            toast.success("Аналізи успіщно додано!")
-
+            toast.success("Аналізи успішно додано!");
         } catch (e) {
             console.error(e);
-            toast.error("Сталась помилка. Спробуйте ще раз!")
+            toast.error("Сталась помилка. Спробуйте ще раз!");
         } finally {
             setLoading(false);
         }
@@ -115,7 +120,6 @@ export default function LabPage() {
             <div className="lab-card">
                 <h2 className="lab-title">Аналізи</h2>
 
-                {/* Пациент */}
                 {!isFromAppointment && (
                     <div className="lab-group">
                         <label>Пацієнт</label>
@@ -135,7 +139,6 @@ export default function LabPage() {
                     </div>
                 )}
 
-                {/* Анализы */}
                 {!isFromAppointment && (
                     <div className="lab-group">
                         <label>Аналіз</label>
@@ -155,7 +158,6 @@ export default function LabPage() {
                     </div>
                 )}
 
-                {/* Номер */}
                 <div className="lab-group">
                     <label>Номер аналізу</label>
                     <input
@@ -166,13 +168,80 @@ export default function LabPage() {
                     />
                 </div>
 
-                {/* Файлы */}
                 <div className="lab-group">
                     <label>Файли</label>
-                    <input type="file" multiple onChange={handleFiles} />
+
+                    <label className="file-button">
+                        Огляд...
+                        <input
+                            type="file"
+                            multiple
+                            onChange={handleFiles}
+                            style={{ display: "none" }}
+                        />
+                    </label>
+
+                    <div style={{ marginTop: "10px" }}>
+                        {form.files.length === 0 && (
+                            <span style={{ fontSize: "13px", color: "#9ca3af" }}>
+                                Файли не вибрані.
+                            </span>
+                        )}
+
+                        {form.files.map((file, idx) => {
+                            const url = URL.createObjectURL(file);
+
+                            return (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        padding: "6px 10px",
+                                        background: "#f9fafb",
+                                        borderRadius: "8px",
+                                        marginTop: "6px",
+                                        fontSize: "13px"
+                                    }}
+                                >
+                                    <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            textDecoration: "none",
+                                            color: "#111827",
+                                            flex: 1
+                                        }}
+                                    >
+                                        📎 {file.name}
+                                    </a>
+
+                                    <button
+                                        onClick={() => removeFile(idx)}
+                                        style={{
+                                            background: "transparent",
+                                            border: "none",
+                                            color: "#ef4444",
+                                            cursor: "pointer",
+                                            fontSize: "14px"
+                                        }}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                <button onClick={submit} disabled={loading} className="lab-button">
+                {/* SUBMIT */}
+                <button
+                    onClick={submit}
+                    disabled={loading}
+                    className="lab-button"
+                >
                     {loading ? "Збереження..." : "Зберегти"}
                 </button>
             </div>

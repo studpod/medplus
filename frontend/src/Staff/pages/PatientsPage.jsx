@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import API from "../../api";
 import "../styles/patient.scss";
 import { toast } from "react-toastify";
-
+import { FaUser, FaPhoneAlt, FaEnvelope, FaBirthdayCake, FaMars, FaVenus, FaRegTrashAlt,
+    FaSave, FaRegListAlt, FaPlus } from "react-icons/fa";
+import { FcPlus } from "react-icons/fc"
 export default function PatientsPage() {
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -33,7 +35,36 @@ export default function PatientsPage() {
         }
     };
 
+    const formatDate = (date) => {
+        if (!date) return "";
 
+        const d = new Date(date);
+
+        const day = String(d.getDate()).padStart(2, "0");
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const year = String(d.getFullYear()).slice(-2);
+
+        return `${day}.${month}.${year}`;
+    };
+
+
+    const formatGender = (gender) => {
+        if (!gender) return "-";
+
+        switch (gender) {
+            case "male":
+                return "Чоловік";
+            case "female":
+                return "Жінка";
+            default:
+                return gender;
+        }
+    };
+    const getGenderIcon = (gender) => {
+        if (gender === "male") return <FaMars />;
+        if (gender === "female") return <FaVenus />;
+        return null;
+    };
     useEffect(() => {
         if (isSelecting) {
             setIsSelecting(false);
@@ -88,6 +119,20 @@ export default function PatientsPage() {
             }
         }
     };
+    const handleRemovePatient = async (id) => {
+
+
+        try {
+            await API.delete(`/doctor/control/patient/unassign?patient_id=${id}`);
+
+            toast.success("Пацієнта відкріплено");
+
+            fetchPatients();
+        } catch (err) {
+            console.error(err);
+            toast.error(err.response?.data?.error || "Помилка");
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -121,6 +166,14 @@ export default function PatientsPage() {
         <div className="patients-page">
             <div className="patients-header">
                 <h2>Список пацієнтів</h2>
+                {isFamilyDoctor && (
+                    <button
+                        className="add-patient-btn"
+                        onClick={() => setShowModal(true)}
+                    >
+                        <FaPlus /> Додати пацієнта
+                    </button>
+                )}
             </div>
 
             <table className="patients-table">
@@ -137,23 +190,50 @@ export default function PatientsPage() {
                 {patients.map((p) => (
                     <tr key={p.id}>
                         <td>
-                            {p.last_name} {p.first_name} {p.middle_name}
+                            <div className="td-with-icon">
+                                <FaUser />
+                                {p.last_name} {p.first_name} {p.middle_name}
+                            </div>
                         </td>
-                        <td>{p.date_of_birth}</td>
-                        <td>{p.phone}</td>
-                        <td>{p.email || "-"}</td>
+
                         <td>
-                            <Link to={`/staff/patient/${p.id}/medical-card`}>
-                                <button>Мед. карта</button>
-                            </Link>
-                            {isFamilyDoctor && (
-                                <button
-                                    className="add-patient-btn"
-                                    onClick={() => setShowModal(true)}
-                                >
-                                    + Додати пацієнта
-                                </button>
-                            )}
+                            <div className="td-with-icon">
+                                <FaBirthdayCake />
+                                {formatDate(p.date_of_birth)}
+                            </div>
+                        </td>
+
+                        <td>
+                            <div className="td-with-icon">
+                                <FaPhoneAlt />
+                                {p.phone}
+                            </div>
+                        </td>
+
+                        <td>
+                            <div className="td-with-icon">
+                                <FaEnvelope />
+                                {p.email || "-"}
+                            </div>
+                        </td>
+
+                        <td>
+                            <div className="actions">
+                                <Link to={`/staff/patient/${p.id}/medical-card`}>
+                                    <button className="btn-med">
+                                        <FaRegListAlt /> Мед. карта
+                                    </button>
+                                </Link>
+
+                                {isFamilyDoctor && (
+                                    <button
+                                        className="delete-btn"
+                                        onClick={() => handleRemovePatient(p.id)}
+                                    >
+                                        <FaRegTrashAlt /> Видалити
+                                    </button>
+                                )}
+                            </div>
                         </td>
                     </tr>
                 ))}
@@ -188,7 +268,7 @@ export default function PatientsPage() {
                                                 {p.last_name} {p.first_name} {p.middle_name}
                                             </span>
                                             <span className="sub">
-                                                {p.date_of_birth}
+                                                {formatDate(p.date_of_birth)}
                                             </span>
                                         </div>
                                     ))}
@@ -199,18 +279,47 @@ export default function PatientsPage() {
 
                         {selectedPatient && (
                             <div className="patient-preview">
-                                <p>
-                                    <b>ПІБ:</b> {selectedPatient.last_name} {selectedPatient.first_name} {selectedPatient.middle_name}
-                                </p>
-                                <p><b>Телефон:</b> {selectedPatient.phone}</p>
-                                <p><b>Email:</b> {selectedPatient.email}</p>
-                                <p><b>Дата народження:</b> {selectedPatient.date_of_birth}</p>
+                                <div className="preview-header">
+                                    <div className="avatar">
+                                        <FaUser />
+                                    </div>
+
+                                    <div className="preview-name">
+                                        {selectedPatient.last_name} {selectedPatient.first_name} {selectedPatient.middle_name}
+                                        <div className="preview-sub">
+                                            {getGenderIcon(selectedPatient.gender)} {formatGender(selectedPatient.gender)}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="preview-info">
+                                    <div className="info-row">
+                <span className="label">
+                    <FaPhoneAlt /> Телефон
+                </span>
+                                        <span>{selectedPatient.phone || "-"}</span>
+                                    </div>
+
+                                    <div className="info-row">
+                <span className="label">
+                    <FaEnvelope /> Email
+                </span>
+                                        <span>{selectedPatient.email || "-"}</span>
+                                    </div>
+
+                                    <div className="info-row">
+                <span className="label">
+                    <FaBirthdayCake /> Дата народження
+                </span>
+                                        <span>{formatDate(selectedPatient.date_of_birth)}</span>
+                                    </div>
+                                </div>
 
                                 <button
                                     className="confirm-btn"
                                     onClick={handleAddPatient}
                                 >
-                                    Додати
+                                    Додати пацієнта
                                 </button>
                             </div>
                         )}

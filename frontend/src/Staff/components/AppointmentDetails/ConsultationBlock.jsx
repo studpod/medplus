@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../../../api";
 import {toast} from "react-toastify";
+import { FaRegSave } from "react-icons/fa";
 
 const fields = [
     { name: "chief_complaint", label: "Скарги" },
@@ -77,7 +78,10 @@ export default function ConsultationBlock({ appointment, refresh }) {
                         onClick={save}
                         disabled={loading}
                     >
-                        {loading ? "..." : "💾 Зберегти"}
+                        {loading ? "..." :  <>
+                            <FaRegSave style={{ marginRight: "8px" }} />
+                            Зберегти
+                        </>}
                     </button>
                 )}
             </div>

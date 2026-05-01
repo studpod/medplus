@@ -9,6 +9,7 @@ export default function AppointmentsSection({ appointments, joinOnlineCall }) {
             case "expected": return "Очікується";
             case "completed": return "Завершено";
             case "cancelled": return "Скасовано";
+            case "no_show": return "Не з’явився"
             default: return status;
         }
     };
@@ -18,10 +19,21 @@ export default function AppointmentsSection({ appointments, joinOnlineCall }) {
             case "expected": return "expected";
             case "completed": return "completed";
             case "cancelled": return "cancelled";
+            case "no_show": return "no_show";
             default: return "";
         }
     };
+    const formatDate = (date) => {
+        if (!date) return "";
 
+        const d = new Date(date);
+
+        const day = String(d.getDate()).padStart(2, "0");
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const year = d.getFullYear();
+
+        return `${day}.${month}.${year}`;
+    };
     return (
         <div className="appointments-section">
             <h2 className="section-title">Мої записи на прийоми</h2>
@@ -55,7 +67,7 @@ export default function AppointmentsSection({ appointments, joinOnlineCall }) {
                                 {/*</div>*/}
 
                                 <div className="datetime">
-                                    <span>{app.date}</span>
+                                    <span>{formatDate(app.date)}</span>
                                     <span className="dot">•</span>
                                     <span>{app.time}</span>
                                     <span className={`status ${getStatusClass(app.status)}`}>

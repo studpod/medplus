@@ -12,7 +12,17 @@ export default function MedicalRecordsSection({ records }) {
             prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
         );
     };
+    const formatDate = (date) => {
+        if (!date) return "";
 
+        const d = new Date(date);
+
+        const day = String(d.getDate()).padStart(2, "0");
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const year = String(d.getFullYear()).slice(-2);
+
+        return `${day}.${month}.${year}`;
+    };
     const toggleLabs = (id) => {
         setExpandedLabs((prev) =>
             prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
@@ -34,14 +44,7 @@ export default function MedicalRecordsSection({ records }) {
                             : "Записів поки немає"}
                     </p>
                 </div>
-
-
-
             </div>
-
-            {/* BODY */}
-
-
                 <div className="accordion-body">
 
                     {records.length === 0 && (
@@ -81,7 +84,7 @@ export default function MedicalRecordsSection({ records }) {
                                                     </span>
 
                                                     <span className="date">
-                                                        {date}
+                                                         {formatDate(date)}
                                                     </span>
 
                                                 </div>

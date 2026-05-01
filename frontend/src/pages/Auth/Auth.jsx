@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../../firebase";
 import {
@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import "./Auth.scss";
 import { toast } from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Auth() {
     const [activeTab, setActiveTab] = useState("login");
@@ -15,31 +16,55 @@ export default function Auth() {
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
     const [error, setError] = useState("");
+
     const navigate = useNavigate();
+    const { user } = useAuth();
+
+    useEffect(() => {
+        if (!user) return;
+
+        if (activeTab === "register") {
+            navigate("/cabinet?edit=true");
+        } else {
+            navigate("/");
+        }
+    }, [user]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
 
         try {
+
             if (activeTab === "register") {
                 if (password !== passwordConfirm) {
                     setError("Паролі не співпадають");
                     return;
                 }
 
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await createUserWithEmailAndPassword(
+                    auth,
+                    email,
+                    password
+                );
+
                 const firebaseUser = userCredential.user;
 
                 await sendEmailVerification(firebaseUser);
+
                 toast.info("На пошту надіслано лист підтвердження");
 
-                navigate("/");
                 return;
             }
 
+
             if (activeTab === "login") {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const userCredential = await signInWithEmailAndPassword(
+                    auth,
+                    email,
+                    password
+                );
+
                 const firebaseUser = userCredential.user;
 
                 if (!firebaseUser.emailVerified) {
@@ -48,7 +73,7 @@ export default function Auth() {
                 }
 
 
-                navigate("/");
+                return;
             }
 
         } catch (err) {
@@ -60,6 +85,8 @@ export default function Auth() {
     return (
         <div className="auth">
             <div className="auth__container">
+
+                {/* TABS */}
                 <div className="auth__tabs">
                     <button
                         className={activeTab === "login" ? "active" : ""}
@@ -68,6 +95,7 @@ export default function Auth() {
                     >
                         Авторизація
                     </button>
+
                     <button
                         className={activeTab === "register" ? "active" : ""}
                         onClick={() => setActiveTab("register")}
@@ -77,6 +105,7 @@ export default function Auth() {
                     </button>
                 </div>
 
+                {/* FORM */}
                 <form className="auth__form" onSubmit={handleSubmit}>
                     <input
                         type="email"
@@ -85,6 +114,7 @@ export default function Auth() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
+
                     <input
                         type="password"
                         placeholder="Пароль"
@@ -109,6 +139,7 @@ export default function Auth() {
                         {activeTab === "login" ? "Увійти" : "Зареєструватись"}
                     </button>
                 </form>
+
             </div>
         </div>
     );

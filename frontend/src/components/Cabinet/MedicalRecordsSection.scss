@@ -418,3 +418,104 @@
     transform: translateY(0);
   }
 }
+
+
+
+/* =========================
+   DIAGNOSTICS BLOCK
+========================= */
+
+.diagnostics-section {
+  margin-top: 20px;
+  border-top: 1px solid #eef1f4;
+  padding-top: 18px;
+}
+
+.diagnostics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  transition: 0.2s;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+}
+
+.diagnostics-title {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.diagnostics-arrow {
+  font-size: 14px;
+  transition: transform 0.25s ease;
+  color: #00bfa6;
+}
+
+.diagnostics-arrow.open {
+  transform: rotate(180deg);
+}
+
+.diagnostics-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diagnostic-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  border-left: 4px solid #6366f1;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.diagnostic-name {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+.diagnostic-field {
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #374151;
+
+  b {
+    color: #111827;
+    font-weight: 600;
+  }
+}
+
+.diagnostic-empty {
+  margin-top: 10px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.diagnostic-files {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.diagnostic-file {
+  padding: 6px 10px;
+  background: #00bfa6;
+  color: white;
+  border-radius: 6px;
+  font-size: 13px;
+  text-decoration: none;
+  transition: 0.2s;
+
+  &:hover {
+    background: #009e8c;
+  }
+}

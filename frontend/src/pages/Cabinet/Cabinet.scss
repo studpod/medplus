@@ -762,3 +762,108 @@
 .pi-edit-btn:hover {
   background: rgba(0,0,0,0.04);
 }
+.labs-page {
+  max-width: 900px;
+  width: 100%;
+  margin-left: auto;
+}
+
+/* CARD */
+.lab-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #eef2f6;
+  transition: 0.2s;
+}
+
+.lab-card:hover {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+/* HEADER */
+.lab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.lab-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.service-name {
+  font-size: 16px;
+}
+
+.lab-number {
+  font-size: 13px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+/* META */
+.lab-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* FILES */
+.lab-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #00bfa6;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+.file-chip:hover {
+  background: #00a893;
+}
+
+.file-type {
+  font-size: 11px;
+  opacity: 0.9;
+  margin-left: 4px;
+}
+
+/* EMPTY */
+.no-files {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.labs-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  input, select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd; } }

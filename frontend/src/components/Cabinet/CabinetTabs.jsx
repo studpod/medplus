@@ -3,6 +3,7 @@ export default function CabinetTabs({ activeTab, setActiveTab }) {
         { key: "personal", label: "Особиста інформація" },
         { key: "medical", label: "Медична карта" },
         { key: "appointments", label: "Записи на прийом" },
+        { key: "labs", label: "Аналізи" },
     ];
 
     return (

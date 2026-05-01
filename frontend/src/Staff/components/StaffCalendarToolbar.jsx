@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import moment from "moment";
 import "react-datepicker/dist/react-datepicker.css";
 import "moment/locale/uk";
+import { FaAngleLeft, FaAngleRight } from "react-icons/fa";
 
 moment.locale("uk");
 
@@ -32,9 +33,9 @@ export default function StaffCalendarToolbar({ date, onNavigate, view, setView }
 
             {/* Кнопки навігації */}
             <div className="toolbar-left">
-                <button onClick={goPrev}>←</button>
+                <button onClick={goPrev}><FaAngleLeft /></button>
                 <button onClick={goCurrent}>Поточна</button>
-                <button onClick={goNext}>→</button>
+                <button onClick={goNext}><FaAngleRight /></button>
             </div>
 
             {/* Кнопка для вибору дати */}

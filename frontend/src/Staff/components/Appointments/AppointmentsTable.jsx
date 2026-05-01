@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import API from "../../../api";
-
+import { FcAlarmClock, FcPlanner } from "react-icons/fc";
 export default function AppointmentsTable({ receptions, refresh }) {
 
     const updateStatus = async (id, status) => {
@@ -17,7 +17,7 @@ export default function AppointmentsTable({ receptions, refresh }) {
     const formatTime = (time) => {
         if (!time) return "";
 
-        return time.slice(0, 5); // HH:MM
+        return time.slice(0, 5);
     };
 
     const formatDate = (date) => {
@@ -27,7 +27,7 @@ export default function AppointmentsTable({ receptions, refresh }) {
 
         const day = String(d.getDate()).padStart(2, "0");
         const month = String(d.getMonth() + 1).padStart(2, "0");
-        const year = String(d.getFullYear()).slice(-2);
+        const year = d.getFullYear();
 
         return `${day}.${month}.${year}`;
     };
@@ -74,14 +74,14 @@ export default function AppointmentsTable({ receptions, refresh }) {
                                     {r.patient.last_name} {r.patient.first_name}
                                 </div>
                                 <div className="time">
-                                    🕒 {formatTime(r.time)}
+                                    <FcAlarmClock /> {formatTime(r.time)}
                                 </div>
                             </div>
                         </div>
 
 
                         <div className="date">
-                            📅 {formatDate(r.date)}
+                            <FcPlanner /> {formatDate(r.date)}
                         </div>
 
 

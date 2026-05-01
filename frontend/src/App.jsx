@@ -19,6 +19,8 @@ import Header from "./components/Header/Header";
 import Auth from "./pages/Auth/Auth";
 import Cabinet from "./pages/Cabinet/Cabinet";
 import ReceptionPage from "./pages/Appointment/AppointmentPage";
+import Departments from "./pages/Departments/DepartmentsPage";
+import DepartmentDetails from "./components/Departments/DepartmentDetails";
 
 import StaffLogin from "./Staff/pages/StaffLogin";
 import StaffDashboard from "./Staff/pages/StaffDashboard";
@@ -76,6 +78,8 @@ function App() {
                 <Routes>
                     {/* ПАЦІЄНТ */}
                     <Route path="/" element={<Home user={user} />} />
+                    <Route path="/departments" element={<Departments />} />
+                    <Route path="/departments/:slug" element={<DepartmentDetails />} />
                     <Route path="/auth" element={<Auth />} />
 
                     <Route

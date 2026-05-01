@@ -3,32 +3,51 @@ import { useParams } from "react-router-dom";
 import API from "../../../api";
 import "../../../components/Cabinet/MedicalRecordsSection.scss";
 import AddMedicalRecordModal from "./AddMedicalRecordModal";
-
-
+import { FaPlus } from "react-icons/fa";
 
 export default function PatientMedicalCard() {
     const { patientId } = useParams();
 
-
     const [patient, setPatient] = useState(null);
-    const [records, setRecords] = useState([]);
-
+    const [appointments, setAppointments] = useState([]);
 
     const [open, setOpen] = useState(true);
     const [expandedRecords, setExpandedRecords] = useState([]);
-    const [expandedLabs, setExpandedLabs] = useState([]);
+    const [expandedDiagnostics, setExpandedDiagnostics] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
+
+    const formatDate = (date) => {
+        if (!date) return "";
+        const d = new Date(date);
+        return `${String(d.getDate()).padStart(2, "0")}.${String(
+            d.getMonth() + 1
+        ).padStart(2, "0")}.${d.getFullYear()}`;
+    };
+
+    const getAge = (date) => {
+        if (!date) return "";
+        const today = new Date();
+        const birth = new Date(date);
+
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        return age;
+    };
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await API.get(`/doctor/view/patient/${patientId}/medical-card`);
+                const res = await API.get(
+                    `/doctor/view/patient/${patientId}/medical-card`
+                );
 
                 setPatient(res.data.patient);
-                setRecords(res.data.medical_records);
-                console.log(res.data.patient);
-
+                setAppointments(res.data.appointments || []);
             } catch (error) {
                 console.error(error);
             }
@@ -39,13 +58,17 @@ export default function PatientMedicalCard() {
 
     const toggleRecord = (id) => {
         setExpandedRecords((prev) =>
-            prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+            prev.includes(id)
+                ? prev.filter((r) => r !== id)
+                : [...prev, id]
         );
     };
 
-    const toggleLabs = (id) => {
-        setExpandedLabs((prev) =>
-            prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+    const toggleDiagnostics = (id) => {
+        setExpandedDiagnostics((prev) =>
+            prev.includes(id)
+                ? prev.filter((r) => r !== id)
+                : [...prev, id]
         );
     };
 
@@ -53,201 +76,245 @@ export default function PatientMedicalCard() {
 
     return (
         <div className="accordion-card">
-            {/* --- Блок інформації про пацієнта --- */}
+
+            {/* PATIENT */}
             <div className="patient-info-block">
                 <h2>Інформація про пацієнта</h2>
 
                 <div className="patient-meta">
-
                     <span>
-            <b>Пацієнт:</b> {patient.last_name} {patient.first_name} {patient.middle_name}
-          </span>
-                    <span><b>Дата народження:</b> {patient.date_of_birth}</span>
+                        <b>Пацієнт:</b> {patient.last_name} {patient.first_name} {patient.middle_name}
+                    </span>
+                    <span>
+                        <b>Дата народження:</b> {formatDate(patient.date_of_birth)} ({getAge(patient.date_of_birth)} р.)
+                    </span>
                     <span><b>Телефон:</b> {patient.phone}</span>
                     <span><b>Email:</b> {patient.email}</span>
-                    <span><b>Адреса проживання:</b>{patient.address}</span>
-                    <span><b>Нотатки до пацієнта:</b>{patient.notes}</span>
-
+                    <span><b>Адреса:</b> {patient.address}</span>
+                    <span><b>Нотатки:</b> {patient.notes}</span>
                 </div>
-
             </div>
 
-            {/* --- Акордеон з медичною карткою --- */}
+            {/* HEADER */}
             <div className="accordion-header">
                 <div>
                     <h3>Амбулаторна медична картка</h3>
                     <p className="records-count">
-                        {records.length > 0 ? `Записів: ${records.length}` : "Записів поки немає"}
+                        {appointments.length > 0
+                            ? `Записів: ${appointments.length}`
+                            : "Записів поки немає"}
                     </p>
                 </div>
 
                 <div className="header-actions">
-
                     <button
                         className="add-record-btn"
                         onClick={() => setShowAddModal(true)}
                     >
-                        ➕ Додати запис
+                        <FaPlus /> Додати запис
                     </button>
 
-                    <span
-                        className="arrow"
-                        onClick={() => setOpen(!open)}
-                    >
-            {open ? "−" : "+"}
-        </span>
-
+                    <span className="arrow" onClick={() => setOpen(!open)}>
+                        {open ? "−" : "+"}
+                    </span>
                 </div>
             </div>
 
+            {/* BODY */}
             {open && (
                 <div className="accordion-body">
-                    {records.length === 0 && <div className="empty">Немає записів</div>}
-                    {records.length > 0 && (
+
+                    {appointments.length === 0 && (
+                        <div className="empty">Немає записів</div>
+                    )}
+
+                    {appointments.length > 0 && (
                         <div className="timeline">
-                            {records.map((record) => {
+
+                            {appointments.map((item) => {
+                                const record = item;
+
                                 const recordOpen = expandedRecords.includes(record.id);
-                                const labsOpen = expandedLabs.includes(record.id);
-                                const doctorName = record.appointment?.doctor
-                                    ? `${record.appointment.doctor.last_name} ${record.appointment.doctor.first_name}`
-                                    : "Лікар не вказаний";
-                                const date = record.appointment?.date || "Дата не вказана";
+                                const diagnosticsOpen =
+                                    expandedDiagnostics.includes(`diag_${record.id}`);
+
+                                const hasDiagnostics =
+                                    record.appointment_services?.some(
+                                        (s) => s.service?.type === "diagnostics"
+                                    );
+
+                                const hasAnyContent =
+                                    record.medical_record || hasDiagnostics;
 
                                 return (
                                     <div className="timeline-item" key={record.id}>
                                         <div className="timeline-dot"></div>
+
                                         <div className="timeline-content">
+
+                                            {/* HEADER */}
                                             <div className="timeline-header">
                                                 <div className="doctor-info">
-                                                    {/*<span className="doctor">*/}
-                                                    {/*  {record.doctor_specialization}: {doctorName}*/}
-                                                    {/*</span>*/}
                                                     <span>
-    {record.appointment?.doctor ? (
-        <>
-            <b>{record.appointment.doctor.specialization?.name}</b>:{" "}
-            {record.appointment.doctor.last_name} {record.appointment.doctor.first_name}
-        </>
-    ) : (
-        "Не вказано"
-    )}
-</span>
-                                                    <span className="date">{date}</span>
+                                                        {record.doctor ? (
+                                                            <>
+                                                                <b>{record.doctor.specialization?.name}</b>:{" "}
+                                                                {record.doctor.last_name} {record.doctor.first_name} {record.doctor.middle_name}
+                                                            </>
+                                                        ) : (
+                                                            "Не вказано"
+                                                        )}
+                                                    </span>
+
+                                                    <span className="date">{formatDate(record.date)}</span>
                                                 </div>
 
                                                 <div className="record-actions">
-
-                                                    <button
-                                                        className="edit-record-btn"
-                                                        onClick={() => {
-                                                            setEditingRecord(record);
-                                                            setShowAddModal(true);
-                                                        }}
-                                                    >
-                                                        🖊 Редагувати
-                                                    </button>
-
                                                     <span
                                                         className="record-toggle"
                                                         onClick={() => toggleRecord(record.id)}
                                                     >
-        {recordOpen ? "−" : "+"}
-    </span>
-
+                                                        {recordOpen ? "−" : "+"}
+                                                    </span>
                                                 </div>
                                             </div>
-
-                                            {recordOpen && (
+                                            {recordOpen && hasAnyContent && (
                                                 <div className="record-details">
-                                                    <div className="record-grid">
-                                                        <div className="record-card complaint">
-                                                            <div className="card-title">Скарга</div>
-                                                            <div className="card-value">
-                                                                {record.chief_complaint || "Не вказано"}
-                                                            </div>
-                                                        </div>
 
-                                                        <div className="record-card anamnesis">
-                                                            <div className="card-title">Анамнез</div>
-                                                            <div className="card-value">
-                                                                {record.anamnesis || "Не вказано"}
-                                                            </div>
-                                                        </div>
-                                                        <div className="record-card anamnesis">
-                                                            <div className="card-title">Первинний огляд</div>
-                                                            <div className="card-value">
-                                                                {record.initial_review  || "Не вказано"}
-                                                            </div>
-                                                        </div>
-                                                        <div className="record-card diagnosis">
-                                                            <div className="card-title">Діагноз</div>
-                                                            <div className="card-value">
-                                                                {record.diagnosis || "Не вказано"}
-                                                            </div>
-                                                        </div>
+                                                    {/* MEDICAL RECORD */}
+                                                    {record.medical_record && (
+                                                        <div className="record-grid">
 
-                                                        <div className="record-card treatment">
-                                                            <div className="card-title">Лікування</div>
-                                                            <div className="card-value">
-                                                                {record.treatment || "Не вказано"}
+                                                            <div className="record-card complaint">
+                                                                <div className="card-title">Скарга</div>
+                                                                <div className="card-value">
+                                                                    {record.medical_record.chief_complaint}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="record-card anamnesis">
+                                                                <div className="card-title">Анамнез</div>
+                                                                <div className="card-value">
+                                                                    {record.medical_record.anamnesis}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="record-card diagnosis">
+                                                                <div className="card-title">Діагноз</div>
+                                                                <div className="card-value">
+                                                                    {record.medical_record.diagnosis}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="record-card treatment">
+                                                                <div className="card-title">Лікування</div>
+                                                                <div className="card-value">
+                                                                    {record.medical_record.treatment}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="record-card prescription">
+                                                                <div className="card-title">Призначення</div>
+                                                                <div className="card-value">
+                                                                    {record.medical_record.prescriptions}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="record-card notes">
+                                                                <div className="card-title">Рекомендації</div>
+                                                                <div className="card-value">
+                                                                    {record.medical_record.notes}
+                                                                </div>
                                                             </div>
                                                         </div>
+                                                    )}
 
-                                                        <div className="record-card prescription">
-                                                            <div className="card-title">Призначення</div>
-                                                            <div className="card-value">
-                                                                {record.prescriptions || "Не вказано"}
-                                                            </div>
-                                                        </div>
+                                                    {/* DIAGNOSTICS */}
+                                                    {hasDiagnostics && (
+                                                        <div className="diagnostics-section">
 
-                                                        <div className="record-card notes">
-                                                            <div className="card-title">Рекомендації</div>
-                                                            <div className="card-value">
-                                                                {record.notes || "Не вказано"}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {record.services?.length > 0 && (
-                                                        <div className="labs-section">
                                                             <div
-                                                                className="labs-header"
-                                                                onClick={() => toggleLabs(record.id)}
+                                                                className="diagnostics-header"
+                                                                onClick={() =>
+                                                                    toggleDiagnostics(`diag_${record.id}`)
+                                                                }
                                                             >
-                                                                <span className="labs-title">Аналізи</span>
-                                                                <span className={`labs-arrow ${labsOpen ? "open" : ""}`}></span>
+                                                                <span className="diagnostics-title">
+                                                                    Діагностика
+                                                                </span>
+
+                                                                <span className={`diagnostics-arrow ${diagnosticsOpen ? "open" : ""}`}>
+                                                                    ▼
+                                                                </span>
                                                             </div>
 
-                                                            {labsOpen && (
-                                                                <div className="labs-list">
-                                                                    {record.services.map((service) =>
-                                                                        service.labs?.map((lab) =>
-                                                                            lab.files?.map((file) => (
-                                                                                <a
-                                                                                    key={file.id}
-                                                                                    href={file.path}
-                                                                                    download
-                                                                                    className="download-btn lab-download"
-                                                                                >
-                                                                                    {service.name}
-                                                                                </a>
-                                                                            ))
+                                                            {diagnosticsOpen && (
+                                                                <div className="diagnostics-list">
+
+                                                                    {record.appointment_services
+                                                                        .filter(
+                                                                            (s) => s.service?.type === "diagnostics"
                                                                         )
-                                                                    )}
+                                                                        .map((service) => {
+                                                                            const report = service.diagnostic_report;
+
+                                                                            return (
+                                                                                <div key={service.id} className="diagnostic-card">
+
+                                                                                    <div className="diagnostic-name">
+                                                                                        {service.service?.name}
+                                                                                    </div>
+
+                                                                                    {report ? (
+                                                                                        <>
+                                                                                            <div className="diagnostic-field">
+                                                                                                <b>Опис:</b> {report.description}
+                                                                                            </div>
+                                                                                            <div className="diagnostic-field">
+                                                                                                <b>Результати:</b> {report.results}
+                                                                                            </div>
+                                                                                            <div className="diagnostic-field">
+                                                                                                <b>Висновок:</b> {report.conclusion}
+                                                                                            </div>
+                                                                                            <div className="diagnostic-field">
+                                                                                                <b>Рекомендації:</b> {report.recommendations}
+                                                                                            </div>
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        <div className="diagnostic-empty">
+                                                                                            Діагностику ще не додано
+                                                                                        </div>
+                                                                                    )}
+
+                                                                                </div>
+                                                                            );
+                                                                        })}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     )}
+
                                                 </div>
                                             )}
+                                            {recordOpen && !hasAnyContent && (
+                                                <div className="record-details">
+                                                    <div className="diagnostic-empty">
+                                                        Немає даних по цьому прийому
+                                                    </div>
+                                                </div>
+                                            )}
+
                                         </div>
                                     </div>
                                 );
                             })}
+
                         </div>
                     )}
+
                 </div>
             )}
+
             <AddMedicalRecordModal
                 isOpen={showAddModal}
                 onClose={() => {
@@ -256,10 +323,8 @@ export default function PatientMedicalCard() {
                 }}
                 patientId={patientId}
                 record={editingRecord}
-                records={records}
+                records={appointments}
             />
-
         </div>
-
     );
 }

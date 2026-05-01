@@ -1,13 +1,10 @@
 import "./Home.scss";
-
+import { useNavigate } from "react-router-dom";
 export default function Home({ user }) {
+    const navigate = useNavigate();
     return (
         <>
-
             {/*<h1>Головна сторінка</h1>*/}
-
-            {/*/!* Тимчасовий індикатор авторизації *!/*/}
-            {/*{user && <p>Ви увійшли як: {user.email}</p>}*/}
 
             <main className="home">
 
@@ -24,7 +21,15 @@ export default function Home({ user }) {
                                 Професійна діагностика, лікування та турбота про ваше здоров’я.
                             </p>
 
-                            <button className="hero__btn">
+                            <button className="hero__btn"
+                                    onClick={() => {
+                                        if (!user) {
+                                            navigate("/auth");
+                                        } else {
+                                            navigate("/reception");
+                                        }
+                                    }}
+                            >
                                 Записатися на прийом
                             </button>
                         </div>

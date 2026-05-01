@@ -14,6 +14,8 @@
   font-weight: 600;
 }
 
+/* TABLE */
+
 .patients-table {
   width: 100%;
   border-collapse: collapse;
@@ -47,22 +49,54 @@
   background: #f8fafc;
 }
 
+/* 🔥 ACTIONS */
 
-.patients-table button {
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 🔵 МЕДКАРТА */
+
+.btn-med {
   background: #4f6ef7;
-  border: none;
   color: white;
+  border: none;
   padding: 7px 14px;
   border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
   transition: 0.2s;
-  margin-left: 10px;
 }
 
-.patients-table button:hover {
+.btn-med:hover {
   background: #3f5de0;
 }
+
+/* 🔴 ВИДАЛИТИ */
+
+.delete-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+}
+
+/* 🔥 ADD BUTTON */
 
 .add-patient-btn {
   background: linear-gradient(135deg, #4f6ef7, #6c8cff);
@@ -80,6 +114,7 @@
   transform: translateY(-2px);
 }
 
+/* MODAL */
 
 .modal-overlay {
   position: fixed;
@@ -99,14 +134,8 @@
   width: 420px;
   max-width: 95%;
   box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-  animation: fadeIn 0.2s ease;
+  overflow: visible;
 }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 
 .modal-input {
   width: 100%;
@@ -120,6 +149,7 @@
   outline: none;
 }
 
+/* SEARCH */
 
 .search-box {
   position: relative;
@@ -128,7 +158,6 @@
 .search-dropdown {
   position: absolute;
   top: 100%;
-  left: 0;
   width: 100%;
   background: #fff;
   border-radius: 12px;
@@ -142,7 +171,6 @@
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  transition: 0.2s;
 }
 
 .search-item:hover {
@@ -158,6 +186,7 @@
   color: #888;
 }
 
+/* PREVIEW */
 
 .patient-preview {
   margin-top: 15px;
@@ -175,13 +204,7 @@
   border: none;
   padding: 10px;
   border-radius: 8px;
-  cursor: pointer;
 }
-
-.confirm-btn:hover {
-  background: #3f5de0;
-}
-
 
 .cancel-btn {
   margin-top: 10px;
@@ -192,10 +215,7 @@
   border-radius: 8px;
 }
 
-.cancel-btn:hover {
-  background: #f5f5f5;
-}
-
+/* SKELETON */
 
 .skeleton-title {
   width: 200px;
@@ -213,10 +233,6 @@
   animation: pulse 1.2s infinite;
 }
 
-.skeleton-table {
-  margin-top: 20px;
-}
-
 .skeleton-row {
   height: 48px;
   background: #e5e7eb;
@@ -229,4 +245,139 @@
   0% { opacity: 1; }
   50% { opacity: 0.5; }
   100% { opacity: 1; }
+}
+
+.patient-preview {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f9fbff;
+  border-radius: 14px;
+  border: 1px solid #e6ebff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* HEADER */
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-header .avatar {
+  width: 45px;
+  height: 45px;
+  background: #eef3ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.preview-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+//.preview-sub {
+//  font-size: 12px;
+//  color: #6b7280;
+//}
+.preview-sub {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preview-sub svg {
+  font-size: 12px;
+}
+/* INFO */
+
+.preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row span:first-child {
+  color: #6b7280;
+}
+
+/* BUTTON */
+
+.confirm-btn {
+  margin-top: 10px;
+  width: 100%;
+  background: linear-gradient(135deg, #4f6ef7, #6c8cff);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.confirm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(79,110,247,0.3);
+}
+
+.td-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.td-with-icon svg {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.btn-med,
+.delete-btn,
+.add-patient-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-med svg,
+.delete-btn svg,
+.add-patient-btn svg {
+  font-size: 14px;
+  position: relative;
+  top: 1px; // мікрокорекція
+}
+
+.td-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.td-with-icon svg {
+  font-size: 14px;
+  color: #6b7280;
+  flex-shrink: 0;
+  position: relative;
+  top: 1px;
 }

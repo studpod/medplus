@@ -9,7 +9,7 @@ export default function StaffSidebar({ user }) {
 
     const specialization = user?.doctor?.specialization?.name;
 
-    const isFamilyDoctor = specialization === "Сімейний лікар";
+    const isFamilyDoctor = specialization === "Сімейний лікар (Терапевт)";
 
     const links = [
         { to: "/staff", label: "Dashboard", icon: "fas fa-home" },

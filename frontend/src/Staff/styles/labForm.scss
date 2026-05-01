@@ -68,3 +68,21 @@
   background: #a0a0a0;
   cursor: not-allowed;
 }
+
+
+.file-button {
+  display: inline-block;
+  padding: 10px 14px;
+  background: #848688;
+  //color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+  user-select: none;
+  width: 80px;
+}
+
+.file-button:hover {
+  background: #357ab8;
+}
