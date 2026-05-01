@@ -6,8 +6,9 @@ use App\Http\Middleware\FirebaseAuth;
 use App\Http\Controllers\Patient\AuthPatientController;
 use App\Http\Controllers\Patient\PersonalOfficeController;
 use App\Http\Controllers\Patient\ReceptionController;
+use App\Http\Controllers\Patient\PatientLabController;
 use App\Http\Controllers\Staff\AuthStaffController;
-use App\Http\Controllers\Staff\Doctor\{MainController, PatientMedicalController};
+use App\Http\Controllers\Staff\Doctor\{MainController,PatientController, AppointmentController, VideoConsultationController, PatientMedicalController};
 use App\Http\Controllers\Staff\Laborant\{MainLabController};
 use App\Http\Controllers\Staff\Receptionist\MainReceptionistController;
 use App\Http\Controllers\PublicViewController;
@@ -122,6 +123,9 @@ Route::middleware([FirebaseAuth::class, 'role:patient'])
              Route::get('/profile',[PersonalOfficeController::class, 'viewProfile']); // api/patient/view/profile
              Route::get('/medical-records', [PersonalOfficeController::class, 'viewMedicalRecords']); // api/patient/view/medical-records
             Route::get('receptions', [PersonalOfficeController::class, 'viewReception']);
+            Route::get('/labs', [PatientLabController::class, 'getPatientLabs']);
+
+
         });
         Route::prefix('control')->group(function(){
             Route::prefix('profile')->group(function(){
@@ -142,24 +146,24 @@ Route::middleware([FirebaseAuth::class, 'role:doctor'])
        Route::prefix('view')->group(function (){
           Route::get('/schedule',[MainController::class, 'viewSchedule']);
            Route::get('/me', [MainController::class, 'me']);
-          Route::get('/appointments', [MainController::class, 'viewReception']);
-          Route::get('/appointments/online', [MainController::class,'viewOnlineAppointments']);
+          Route::get('/appointments', [AppointmentController::class, 'viewReception']);
+          Route::get('/appointments/online', [AppointmentController::class,'viewOnlineAppointments']);
            Route::get('/calendar', [MainController::class, 'calendar']);
            Route::get('/specializations', [MainController::class, 'getSpecializations']);
            Route::get('/profile', [MainController::class, 'getDoctorProfile']);
-           Route::get('/appointment/{id}', [MainController::class, 'getAppointment']);
-           Route::get('/appointment-service/{id}', [MainController::class, 'getAppointmentService']);
+           Route::get('/appointment/{id}', [AppointmentController::class, 'getAppointment']);
+           Route::get('/appointment-service/{id}', [AppointmentController::class, 'getAppointmentService']);
            Route::get('/lab_test', [MainController::class, 'getLabTest']);
-           Route::get('appointment-services/by-patient/{patientId}', [MainController::class, 'getAppointmentServicesByPatient']
+           Route::get('appointment-services/by-patient/{patientId}', [AppointmentController::class, 'getAppointmentServicesByPatient']
            );
               Route::prefix('patient')->group(function(){
-                  Route::get('/search', [MainController::class, 'searchPatient']);
+                  Route::get('/search', [PatientController::class, 'searchPatient']);
 
-                  Route::get('/all', [MainController::class, 'viewPatients']);
+                  Route::get('/all', [PatientController::class, 'viewPatients']);
                       Route::prefix('{patientId}')->group(function(){
-                          Route::get('appointments', [MainController::class, 'getPatientAppointments']);
-                          Route::get('/appointments/{appointmentId}', [MainController::class, 'getPatientAppointment']);
-                          Route::get('/medical-card', [MainController::class, 'viewMedicalCard']);
+                          Route::get('appointments', [AppointmentController::class, 'getPatientAppointments']);
+//                          Route::get('/appointments/{appointmentId}', [MainController::class, 'getPatientAppointment']);
+                          Route::get('/medical-card', [PatientMedicalController::class, 'viewMedicalCard']);
                           Route::get('/labs-result', [MainController::class, 'viewLabsResult']);
                           Route::get('/referrals', [MainController::class, 'getPatientReferrals']);
                       });
@@ -167,7 +171,8 @@ Route::middleware([FirebaseAuth::class, 'role:doctor'])
 
        });
        Route::prefix('control')->group(function(){
-           Route::get('/patient/assign', [MainController::class, 'assignPatient']);
+           Route::get('/patient/assign', [PatientController::class, 'assignPatient']);
+           Route::delete('/patient/unassign', [PatientController::class, 'unassignPatient']);
            Route::prefix('patient/{patientId}')->group(function(){
                Route::prefix('medical-card')->group(function(){
                    Route::post('/add', [PatientMedicalController::class, 'addMedicalCard']);
@@ -175,13 +180,15 @@ Route::middleware([FirebaseAuth::class, 'role:doctor'])
                });
            });
                Route::prefix('video-call')->group(function(){
-                   Route::post('/start', [MainController::class, 'startVideoCall']);
-                   Route::put('/end', [MainController::class, 'endVideoCall']);
+                   Route::post('/start', [VideoConsultationController::class, 'startVideoCall']);
+                   Route::put('/end', [VideoConsultationController::class, 'endVideoCall']);
                  });
                Route::post('/referrals', [MainController::class, 'addReferral']);
            Route::post('/appointment-service/{appointment}/medical-record',[MainController::class, 'storeForAppointment']);
            Route::post('/labs/create', [MainController::class, 'store']);
-           Route::put('/update-status-appointment/{appointmentId}/cancelled', [MainController::class, 'updateStatusAppointment']);
+           Route::post('/diagnostics/create', [AppointmentController::class, 'createDiagnostic']);
+           Route::put('/update-status-appointment/{appointmentId}/cancelled', [AppointmentController::class, 'updateStatusAppointment']);
+           Route::post('/appointments/{id}/complete', [AppointmentController::class, 'completeAppointment']);
        });
     });
 

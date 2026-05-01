@@ -61,6 +61,7 @@ class PersonalOfficeController extends Controller
             'middle_name' => 'nullable|string|max:255',
             'gender' => 'required|in:male,female',
             'date_of_birth' => 'required|date',
+            'address' => 'nullable|string|max:255',
             'phone' => 'required|string|max:13|unique:patients,phone'
         ]);
 
@@ -71,7 +72,8 @@ class PersonalOfficeController extends Controller
             'middle_name' => $validated['middle_name'] ?? null,
             'gender' => $validated['gender'],
             'date_of_birth' => $validated['date_of_birth'],
-            'phone' => $validated['phone']
+            'phone' => $validated['phone'],
+            'address' => $request->input('address')
         ]);
 
         return response()->json([

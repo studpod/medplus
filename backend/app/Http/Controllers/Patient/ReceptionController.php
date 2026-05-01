@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Models\{Appointment, Patient, User, Doctor, DoctorSchedules, AppointmentService, Service, Referral};
+use App\Models\{Appointment, Patient, User, Doctor, DoctorSchedules, AppointmentService, Service};
 
 
 
@@ -58,10 +58,10 @@ class ReceptionController extends Controller
             ], 422);
         }
 
-        // 🔥 ПЕРЕВІРКА НАПРАВЛЕННЯ
-        $hasReferral = Referral::where('patient_id', $patient->id)
-            ->where('to_specialization_id', $doctor->specialization_id)
-            ->exists();
+
+//        $hasReferral = Referral::where('patient_id', $patient->id)
+//            ->where('to_specialization_id', $doctor->specialization_id)
+//            ->exists();
 
         $services = Service::whereIn('id', $validated['service_ids'])->get();
 
@@ -82,7 +82,7 @@ class ReceptionController extends Controller
             'time'         => $validated['time'],
             'status'       => 'expected',
             'is_online'    => $isOnline,
-            'has_referral' => $hasReferral, // 🔥 ВАЖЛИВО
+
         ]);
 
         foreach ($services as $service) {

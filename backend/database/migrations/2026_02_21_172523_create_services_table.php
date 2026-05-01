@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description');
             $table->decimal('price', 8, 2);
-            $table->enum('type',['consultation', 'lab_test', 'procedure','other']);
+            $table->enum('type',['consultation', 'lab_test', 'procedure','checkup', 'diagnostics']);
 
         });
     }

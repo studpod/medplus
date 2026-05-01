@@ -25,4 +25,13 @@ class AppointmentService extends Model
     {
         return $this->hasMany(LabsResult::class);
     }
+//    public function procedureLog()
+//    {
+//        return $this->hasOne(ProcedureLog::class);
+//    }
+
+    public function diagnosticReport()
+    {
+        return $this->hasOne(DiagnosticReport::class);
+    }
 }
