@@ -64,6 +64,27 @@ Route::group(['prefix' => 'public/view'], function () {
 //    });
 //});
 
+//Route::prefix('auth')->group(function () {
+//
+//    Route::post('/sync', function(Request $request) {
+//
+//        $firebaseUser = $request->all();
+//
+//        if (!isset($firebaseUser['uid'])) {
+//            return response()->json(['error' => 'No Firebase user data'], 400);
+//        }
+//
+//        $user = User::firstOrCreate(
+//            ['firebase_uid' => $firebaseUser['uid']],
+//            [
+//                'role' => 'patient',
+//            ]
+//        );
+//
+//        return response()->json($user);
+//    });
+//
+//});
 Route::prefix('auth')->group(function () {
 
     Route::post('/sync', function(Request $request) {
@@ -71,7 +92,9 @@ Route::prefix('auth')->group(function () {
         $firebaseUser = $request->all();
 
         if (!isset($firebaseUser['uid'])) {
-            return response()->json(['error' => 'No Firebase user data'], 400);
+            return response()->json([
+                'error' => 'No Firebase user data'
+            ], 400);
         }
 
         $user = User::firstOrCreate(
@@ -81,11 +104,16 @@ Route::prefix('auth')->group(function () {
             ]
         );
 
+        if ($user->role !== 'patient') {
+            return response()->json([
+                'error' => 'Access denied'
+            ], 403);
+        }
+
         return response()->json($user);
     });
 
 });
-
 //Route::group(['prefix' => 'staff/auth'], function () {
 //    Route::post('/login', [AuthStaffController::class, 'login']);
 //
@@ -152,9 +180,19 @@ Route::prefix('auth')->group(function () {
 
 Route::post('/staff/sync', function (Request $request) {
 
-    return response()->json(auth()->user());
+    $user = auth()->user();
+
+    if (!in_array($user->role, ['doctor', 'admin'])) {
+        return response()->json([
+            'error' => 'Access denied'
+        ], 403);
+    }
+
+    return response()->json($user);
 
 })->middleware('firebase.auth');
+
+
 Route::middleware([FirebaseAuth::class, 'role:patient'])
     ->prefix('patient')
     ->group(function () {
