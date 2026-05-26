@@ -8,7 +8,7 @@ import AppointmentHeader from "../components/AppointmentDetails/AppointmentHeade
 import AppointmentInfoCard from "../components/AppointmentDetails/AppointmentInfoCard";
 import AppointmentServices from "../components/AppointmentDetails/AppointmentServices";
 import ConsultationBlock from "../components/AppointmentDetails/ConsultationBlock";
-import DiagnosticBlock from "../components/AppointmentDetails/DiagnosticBlock";
+
 
 import "../styles/appointments.scss";
 
@@ -70,13 +70,14 @@ export default function AppointmentDetailsPage() {
     };
 
     const status = getStatus();
-    const hasConsultation = appointment.appointment_services?.some(
-        s => s.service?.type === "consultation" || s.service?.type === "checkup"
+    const hasMedicalRecordService = appointment.appointment_services?.some(
+        s =>
+            ["consultation", "checkup", "diagnostics"].includes(
+                s.service?.type
+            )
     );
 
-    const hasDiagnostics = appointment.appointment_services?.some(
-        s => s.service?.type === "diagnostics"
-    );
+
 
     return (
         <div className="appointment-page">
@@ -95,23 +96,14 @@ export default function AppointmentDetailsPage() {
                 appointment={appointment}
                 navigate={navigate}
             />
-            {hasConsultation && ["expected", "completed", "closed"].includes(appointment.status) && (
+            {hasMedicalRecordService &&
+                ["expected", "completed", "closed"].includes(appointment.status) && (
                 <ConsultationBlock
                     appointment={appointment}
                     refresh={fetchData}
                 />
             )}
-            {hasDiagnostics &&
-                appointment.appointment_services.map(item =>
-                    item.service?.type === "diagnostics" ? (
-                        <DiagnosticBlock
-                            key={item.id}
-                            item={item}
-                            refresh={fetchData}
-                        />
-                    ) : null
-                )
-            }
+
 
         </div>
     );

@@ -122,63 +122,112 @@ class PersonalOfficeController extends Controller
     public function viewMedicalRecords()
     {
         try {
+
             $user = auth()->user();
             $patient = $user->patient;
 
             if (!$patient) {
-                return response()->json(['error' => 'Профіль пацієнта не знайдено'], 404);
+                return response()->json([
+                    'error' => 'Профіль пацієнта не знайдено'
+                ], 404);
             }
 
-            $records = MedicalRecord::whereHas('appointment', function ($query) use ($patient) {
-                $query->where('patient_id', $patient->id);
-            })
+            $appointments = Appointment::where('patient_id', $patient->id)
+                ->where('status', 'completed')
                 ->with([
-                    'appointment.doctor.user',
-                    'appointment.doctor.specialization',
-                    'appointment.appointmentServices.service',
-                    'appointment.appointmentServices.labsResults.labsFiles'
+                    'doctor.specialization',
+                    'doctor.user',
+                    'medicalRecord',
+                    'appointmentServices.service',
+                    'appointmentServices.labsResults.labsFiles',
                 ])
-                ->orderBy('created_at', 'desc')
+                ->orderBy('date', 'desc')
                 ->get()
-                ->map(function ($record) {
-                    $record->doctor_full_name = $record->appointment->doctor && $record->appointment->doctor->user
-                        ? $record->appointment->doctor->user->last_name . ' ' . $record->appointment->doctor->user->first_name
-                        : null;
+                ->map(function ($appointment) {
 
-                    $record->doctor_specialization = $record->appointment->doctor && $record->appointment->doctor->specialization
-                        ? $record->appointment->doctor->specialization->name
-                        : "Спеціалізація не вказана";
-                    $record->services = $record->appointment->appointmentServices->map(function ($appService) {
-                        return [
-                            'id' => $appService->id,
-                            'name' => $appService->service->name,
-                            'type' => $appService->service->type,
+                    $hasMedical = !is_null($appointment->medicalRecord);
 
-                            'labs' => $appService->labsResults->map(function ($lab) {
+                    $hasLabs = $appointment->appointmentServices
+                        ->contains(fn ($s) => $s->labsResults->isNotEmpty());
+
+                    // якщо немає ні мед запису ні аналізів
+                    if (!$hasMedical && !$hasLabs) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => $appointment->id,
+
+                        'date' => $appointment->date,
+
+                        'doctor_full_name' =>
+                            trim(
+                                ($appointment->doctor?->last_name ?? '') . ' ' .
+                                ($appointment->doctor?->first_name ?? '') . ' ' .
+                                ($appointment->doctor?->middle_name ?? '')
+                            ),
+
+                        'doctor_specialization' =>
+                            $appointment->doctor?->specialization?->name
+                            ?? "Спеціалізація не вказана",
+
+                        // ======================
+                        // CONSULTATION
+                        // ======================
+                        'medical_record' => $appointment->medicalRecord ? [
+                            'chief_complaint' => $appointment->medicalRecord->chief_complaint,
+                            'anamnesis' => $appointment->medicalRecord->anamnesis,
+                            'initial_review' => $appointment->medicalRecord->initial_review,
+                            'diagnosis' => $appointment->medicalRecord->diagnosis,
+                            'treatment' => $appointment->medicalRecord->treatment,
+                            'prescriptions' => $appointment->medicalRecord->prescriptions,
+                            'notes' => $appointment->medicalRecord->notes,
+                        ] : null,
+
+                        // ======================
+                        // SERVICES + LABS
+                        // ======================
+                        'services' => $appointment->appointmentServices
+                            ->map(function ($service) {
+
                                 return [
-                                    'id' => $lab->id,
-                                    'files' => $lab->labsFiles->map(function ($file) {
-                                        return [
+                                    'id' => $service->id,
+
+                                    'name' => $service->service->name,
+
+                                    'type' => $service->service->type,
+
+                                    'labs' => $service->labsResults->map(fn ($lab) => [
+                                        'id' => $lab->id,
+
+                                        'files' => $lab->labsFiles->map(fn ($file) => [
                                             'id' => $file->id,
+
                                             'path' => asset('storage/' . $file->file_path),
-                                            'type' => $file->file_type,
-                                        ];
-                                    })->toArray()
+                                        ])
+                                    ]),
                                 ];
                             })
-                        ];
-                    });
+                            ->values(),
 
-                    return $record;
+                        'has_medical_record' => $hasMedical,
+                        'has_labs' => $hasLabs,
+                    ];
+                })
+                ->filter()
+                ->values();
 
-                });
-
-            \Log::info('Medical records with labs: ', $records->toArray());
-            return response()->json(['medical_records' => $records]);
+            return response()->json([
+                'medical_records' => $appointments
+            ]);
 
         } catch (\Exception $e) {
-            \Log::error('MedicalRecords error: '.$e->getMessage());
-            return response()->json(['error' => 'Помилка сервера'], 500);
+
+            \Log::error('MedicalRecords error: ' . $e->getMessage());
+
+            return response()->json([
+                'error' => 'Помилка сервера'
+            ], 500);
         }
     }
     public function viewReception(){

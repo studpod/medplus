@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import API from "../../../api";
 import { toast } from "react-toastify";
-import { FaRegSave } from "react-icons/fa";
+import { FaRegSave, FaEdit } from "react-icons/fa";
 
 export default function DiagnosticBlock({ item, refresh }) {
 
     const hasReport = !!item.diagnostic_report;
 
+    const [isEditing, setIsEditing] = useState(!hasReport);
     const [loading, setLoading] = useState(false);
 
     const [form, setForm] = useState({
@@ -21,6 +22,7 @@ export default function DiagnosticBlock({ item, refresh }) {
     useEffect(() => {
         if (item?.diagnostic_report) {
             setForm(item.diagnostic_report);
+            setIsEditing(false);
         }
     }, [item]);
 
@@ -48,17 +50,27 @@ export default function DiagnosticBlock({ item, refresh }) {
                 data.append("files[]", file);
             });
 
-            await API.post(
-                "/doctor/control/diagnostics/create",
-                data,
-                { headers: { "Content-Type": "multipart/form-data" } }
-            );
+            if (hasReport) {
+                await API.put(
+                    `/doctor/control/diagnostics/${item.diagnostic_report.id}/update`,
+                    data,
+                    { headers: { "Content-Type": "multipart/form-data" } }
+                );
+                toast.success("Оновлено!");
+            } else {
+                await API.post(
+                    "/doctor/control/diagnostics/create",
+                    data,
+                    { headers: { "Content-Type": "multipart/form-data" } }
+                );
+                toast.success("Створено!");
+            }
 
-            toast.success("Діагностику збережено!");
+            setIsEditing(false);
             refresh();
 
         } catch (e) {
-            toast.error(e.response?.data?.error || "Помилка");
+            toast.error("Помилка");
         } finally {
             setLoading(false);
         }
@@ -71,11 +83,21 @@ export default function DiagnosticBlock({ item, refresh }) {
 
             <div className="medical-header">
                 <div>
-                    <h3>Діагностика</h3>
-                    <p>{item.service?.name}</p>
+                    <h3>{item.service?.name}</h3>
+                    <p>Діагностика</p>
                 </div>
 
-                {!hasReport && (
+                {hasReport && !isEditing && (
+                    <button
+                        className="save-btn"
+                        onClick={() => setIsEditing(true)}
+                    >
+                        <FaEdit style={{ marginRight: 8 }} />
+                        Редагувати
+                    </button>
+                )}
+
+                {isEditing && (
                     <button
                         className="save-btn"
                         onClick={save}
@@ -89,53 +111,25 @@ export default function DiagnosticBlock({ item, refresh }) {
 
             <div className="medical-grid">
 
-                <div className="medical-field full">
-                    <label>Опис</label>
-                    <textarea
-                        name="description"
-                        value={form.description || ""}
-                        onChange={handleChange}
-                        disabled={hasReport}
-                    />
-                </div>
+                {["description", "results", "conclusion", "recommendations"].map(field => (
+                    <div key={field} className="medical-field full">
+                        <label>{field}</label>
+                        <textarea
+                            name={field}
+                            value={form[field] || ""}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                        />
+                    </div>
+                ))}
 
                 <div className="medical-field full">
-                    <label>Результати</label>
-                    <textarea
-                        name="results"
-                        value={form.results || ""}
-                        onChange={handleChange}
-                        disabled={hasReport}
-                    />
-                </div>
-
-                <div className="medical-field full">
-                    <label>Висновок</label>
-                    <textarea
-                        name="conclusion"
-                        value={form.conclusion || ""}
-                        onChange={handleChange}
-                        disabled={hasReport}
-                    />
-                </div>
-
-                <div className="medical-field full">
-                    <label>Рекомендації</label>
-                    <textarea
-                        name="recommendations"
-                        value={form.recommendations || ""}
-                        onChange={handleChange}
-                        disabled={hasReport}
-                    />
-                </div>
-
-                <div className="medical-field full">
-                    <label>Файли (рентген / МРТ / фото)</label>
+                    <label>Файли</label>
                     <input
                         type="file"
                         multiple
                         onChange={handleFiles}
-                        disabled={hasReport}
+                        disabled={!isEditing}
                     />
                 </div>
 

@@ -1,3 +1,5 @@
+import styles from "./styles/CabinetTabs.module.scss";
+
 export default function CabinetTabs({ activeTab, setActiveTab }) {
     const tabs = [
         { key: "personal", label: "Особиста інформація" },
@@ -7,11 +9,13 @@ export default function CabinetTabs({ activeTab, setActiveTab }) {
     ];
 
     return (
-        <div className="cabinet-tabs">
-            {tabs.map(tab => (
+        <div className={styles.cabinetTabs}>
+            {tabs.map((tab) => (
                 <button
                     key={tab.key}
-                    className={`tab-btn ${activeTab === tab.key ? "active" : ""}`}
+                    className={`${styles.tabBtn} ${
+                        activeTab === tab.key ? styles.active : ""
+                    }`}
                     onClick={() => setActiveTab(tab.key)}
                 >
                     {tab.label}

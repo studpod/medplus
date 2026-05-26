@@ -125,3 +125,51 @@
   display: none;
 }
 
+.staff-calendar-filters {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.staff-calendar-select {
+  min-width: 260px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #dbe4ea;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2d3436;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+  cursor: pointer;
+}
+
+.staff-calendar-select:hover {
+  border-color: #457b9d;
+}
+
+.staff-calendar-select:focus {
+  border-color: #457b9d;
+  box-shadow: 0 0 0 4px rgba(69,123,157,0.12);
+}
+
+.staff-calendar-select:disabled {
+  background: #f3f5f7;
+  color: #9aa4ad;
+  cursor: not-allowed;
+  border-color: #e2e8ee;
+}
+
+@media(max-width: 768px) {
+  .staff-calendar-filters {
+    flex-direction: column;
+  }
+
+  .staff-calendar-select {
+    width: 100%;
+    min-width: unset;
+  }
+}

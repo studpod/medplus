@@ -1,14 +1,15 @@
 import { useState } from "react";
+import styles from "./styles/LabsSection.module.scss";
 import { FaFlask, FaDownload, FaUserMd, FaCalendarAlt } from "react-icons/fa";
 
 export default function LabsSection({ labs }) {
     const [sort, setSort] = useState("desc");
     const [filterDate, setFilterDate] = useState("");
 
-    const filtered = labs
+    const filtered = (labs || [])
         .filter(l => {
             if (!filterDate) return true;
-            return l.created_at.slice(0, 10) === filterDate;
+            return l.created_at?.slice(0, 10) === filterDate;
         })
         .sort((a, b) => {
             return sort === "desc"
@@ -28,10 +29,10 @@ export default function LabsSection({ labs }) {
     };
 
     return (
-        <div className="labs-page">
-            <h2 className="section-title">Аналізи</h2>
+        <div className={styles.labsPage}>
+            <h2 className={styles.sectionTitle}>Аналізи</h2>
 
-            <div className="labs-controls">
+            <div className={styles.labsControls}>
                 <input
                     type="date"
                     value={filterDate}
@@ -44,32 +45,32 @@ export default function LabsSection({ labs }) {
                 </select>
             </div>
 
-            <div className="labs-list">
+            <div className={styles.labsList}>
                 {filtered.map(lab => (
-                    <div key={lab.id} className="lab-card">
+                    <div key={lab.id} className={styles.labCard}>
 
                         {/* HEADER */}
-                        <div className="lab-header">
-                            <div className="lab-title">
+                        <div className={styles.labHeader}>
+                            <div className={styles.labTitle}>
                                 <FaFlask />
-                                <span className="service-name">
+                                <span className={styles.serviceName}>
                                     {lab.appointment_service?.service?.name}
                                 </span>
                             </div>
 
-                            <div className="lab-number">
+                            <div className={styles.labNumber}>
                                 № {lab.labNumber}
                             </div>
                         </div>
 
                         {/* META */}
-                        <div className="lab-meta">
-                            <span className="meta-item">
+                        <div className={styles.labMeta}>
+                            <span className={styles.metaItem}>
                                 <FaCalendarAlt />
                                 {new Date(lab.created_at).toLocaleDateString()}
                             </span>
 
-                            <span className="meta-item">
+                            <span className={styles.metaItem}>
                                 <FaUserMd />
                                 {lab.appointment_service?.appointment?.doctor?.last_name}{" "}
                                 {lab.appointment_service?.appointment?.doctor?.first_name}
@@ -77,7 +78,7 @@ export default function LabsSection({ labs }) {
                         </div>
 
                         {/* FILES */}
-                        <div className="lab-files">
+                        <div className={styles.labFiles}>
                             {lab.labs_files?.length > 0 ? (
                                 lab.labs_files.map(file => (
                                     <a
@@ -86,17 +87,17 @@ export default function LabsSection({ labs }) {
                                         download
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="file-chip"
+                                        className={styles.fileChip}
                                     >
                                         <FaDownload />
                                         <span>Завантажити</span>
-                                        <span className="file-type">
+                                        <span className={styles.fileType}>
                                             {getFileLabel(file)}
                                         </span>
                                     </a>
                                 ))
                             ) : (
-                                <span className="no-files">
+                                <span className={styles.noFiles}>
                                     Немає файлів
                                 </span>
                             )}

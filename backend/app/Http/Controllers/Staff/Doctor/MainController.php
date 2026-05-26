@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Kreait\Firebase\Factory;
 use App\Models\{Doctor, Patient, DoctorSchedules,
-    MedicalRecord, Appointment, AppointmentService, AppointmentStatusLog,VideoCall, Referral,Specialization,
+    MedicalRecord, Appointment, AppointmentService, AppointmentStatusLog,VideoCall,Specialization,
     LabsResult, LabsFile, Service,};
 
-
+use Illuminate\Support\Facades\Storage;
 class MainController extends Controller
 {
     public function calendar()
@@ -430,6 +430,58 @@ class MainController extends Controller
             'user' => $user,
             'doctor' => $doctor
         ]);
+    }
+
+    public function updateMe(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user || $user->role !== 'doctor') {
+            return response()->json(['error' => 'Доступ заборонено'], 403);
+        }
+
+        $doctor = Doctor::where('user_id', $user->id)->first();
+
+        if (!$doctor) {
+            return response()->json(['error' => 'Лікаря не знайдено'], 404);
+        }
+
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'phone' => 'required|string|max:13|unique:doctors,phone,' . $doctor->id,
+        ]);
+
+        $doctor->update($validated);
+
+        return response()->json([
+            'message' => 'Профіль оновлено',
+            'doctor' => $doctor
+        ]);
+    }
+    public function updateAvatar(Request $request)
+    {
+        $user = auth()->user();
+
+        $doctor = Doctor::where('user_id', $user->id)->first();
+
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048'
+        ]);
+
+
+        if ($doctor->avatar && Storage::disk('public')->exists($doctor->avatar)) {
+            Storage::disk('public')->delete($doctor->avatar);
+        }
+
+        $path = $request->file('avatar')->store('avatars', 'public');
+
+        $doctor->update([
+            'avatar' => $path
+        ]);
+
+        return response()->json(['message' => 'Аватар оновлено']);
     }
     public function updateStatusAppointment($appointmentId)
     {

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Kreait\Firebase\Factory;
-use App\Models\{Patient, Doctor, Appointment, MedicalRecord, AppointmentStatusLog};
+use App\Models\{Patient, Doctor, Appointment, MedicalRecord, AppointmentStatusLog, DiagnosticReport, DiagnosticFile};
 use Illuminate\Support\Facades\Auth;
 
 class PatientMedicalController extends Controller
@@ -60,7 +60,6 @@ class PatientMedicalController extends Controller
             'doctor.specialization',
             'medicalRecord',
             'appointmentServices.service',
-            'appointmentServices.diagnosticReport.files',
         ])
             ->where('patient_id', $patientId);
 
@@ -69,6 +68,7 @@ class PatientMedicalController extends Controller
         }
 
         $appointments = $appointmentsQuery
+            ->whereHas('medicalRecord')
             ->orderBy('date', 'desc')
             ->get();
 
@@ -237,5 +237,79 @@ class PatientMedicalController extends Controller
             'message' => 'Запис медичної карти оновлено',
             'medical_record' => $record
         ]);
+    }
+
+    public function updateMedicalRecord(Request $request, $patientId, $id)
+    {
+        $record = MedicalRecord::where('id', $id)
+            ->whereHas('appointment', function ($q) use ($patientId) {
+                $q->where('patient_id', $patientId);
+            })
+            ->first();
+
+        if (!$record) {
+            return response()->json(['error' => 'Запис не знайдено'], 404);
+        }
+
+
+        $validated = $request->validate([
+            'chief_complaint' => 'nullable|string|max:2000',
+            'anamnesis' => 'nullable|string|max:3000',
+            'initial_review' => 'nullable|string|max:2000',
+            'diagnosis' => 'nullable|string|max:2000',
+            'treatment' => 'nullable|string|max:3000',
+            'prescriptions' => 'nullable|string|max:3000',
+            'notes' => 'nullable|string|max:3000',
+        ], [
+            'string' => 'Поле :attribute має бути текстом',
+            'max' => 'Поле :attribute занадто довге (макс :max символів)'
+        ]);
+
+        $record->update($validated);
+
+        return response()->json(['message' => 'Оновлено']);
+    }
+    public function updateDiagnostic(Request $request, $id)
+    {
+        $report = DiagnosticReport::find($id);
+
+        if (!$report) {
+            return response()->json(['error' => 'Не знайдено'], 404);
+        }
+
+        $validated = $request->validate([
+            'description' => 'nullable|string|max:3000',
+            'results' => 'nullable|string|max:5000',
+            'conclusion' => 'nullable|string|max:3000',
+            'recommendations' => 'nullable|string|max:3000',
+
+            'files' => 'nullable|array',
+            'files.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB
+        ], [
+            'files.*.mimes' => 'Дозволені формати: jpg, jpeg, png, pdf',
+            'files.*.max' => 'Файл не більше 5MB',
+        ]);
+
+        $report->update([
+            'description' => $validated['description'] ?? null,
+            'results' => $validated['results'] ?? null,
+            'conclusion' => $validated['conclusion'] ?? null,
+            'recommendations' => $validated['recommendations'] ?? null,
+        ]);
+
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+
+                $path = $file->store('diagnostics', 'public');
+
+                DiagnosticFile::create([
+                    'diagnostic_report_id' => $report->id,
+                    'file_path' => $path,
+                    'file_type' => $file->getClientOriginalExtension()
+                ]);
+            }
+        }
+
+        return response()->json(['message' => 'Оновлено']);
     }
 }

@@ -23,7 +23,7 @@ export default function AppointmentServices({ appointment, navigate }) {
 
                     const labDone = item.labs_results?.length > 0;
 
-                    const diagnosticsDone = !!item.diagnostic_report?.id;
+
 
                     const consultationDone = !!appointment.medical_record;
 
@@ -54,14 +54,9 @@ export default function AppointmentServices({ appointment, navigate }) {
                                         )
                                 )}
 
-                                {/* DIAGNOSTICS */}
-                                {type === "diagnostics" && (
-                                    diagnosticsDone
-                                        ? <span className="done"><FcOk /></span>
-                                        : <FcProcess />
-                                )}
 
-                                {["consultation", "checkup"].includes(type) && (
+
+                                {["consultation", "checkup", "diagnostics"].includes(type) && (
                                     consultationDone
                                         ? <FcOk />
                                         : <FcProcess />

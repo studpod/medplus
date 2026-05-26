@@ -34,6 +34,15 @@ import LabPage from "./Staff/pages/LabPage"
 import VideoPage from "./pages/VideoPage";
 import StaffVideoRoom from "./Staff/pages/StaffVideoRoom";
 import StaffWaitingRoom from "./Staff/components/VideoRoom/StaffWaitingRoom";
+import StaffSettings from "./Staff/pages/StaffSettings"
+import CreateAppointmentPage from "./Staff/Receptionist/pages/CreateAppointmentPage";
+import ReceptionistAppointmentsPage from "./Staff/Receptionist/pages/AppointmentsPage";
+import EditAppointmentPage from "./Staff/Receptionist/pages/EditAppointmentPage";
+import ReceptionistPatientsPage from "./Staff/Receptionist/pages/ReceptionistPatientsPage";
+import ReceptionistSettingsPage from "./Staff/Receptionist/pages/ReceptionistSettingsPage";
+
+import AdminDashboard from "./Staff/Admin/pages/AdminDashboard";
+import DoctorsPage from "./Staff/Admin/pages/DoctorsPage";
 
 import PrivateRoute from "../src/context/PrivateRoute";
 
@@ -56,6 +65,7 @@ function App() {
     const [staffUser, setStaffUser] = useState(
         JSON.parse(localStorage.getItem("staff_user"))
     );
+
 
     function StaffWaitingRoomWrapper() {
         const { patientId } = useParams();
@@ -121,6 +131,7 @@ function App() {
                         element={<StaffWaitingRoomWrapper />}
                     />
 
+
                     <Route
                         path="/staff"
                         element={
@@ -132,12 +143,28 @@ function App() {
                         <Route index element={<StaffDashboard />} />
                         <Route path="appointments" element={<AppointmentsPage />} />
                         <Route path="appointments/:id" element={<AppointmentDetailsPage />} />
+                        <Route path="appointments/create" element={<CreateAppointmentPage />} />
+                        <Route path="receptionist/appointments/:id/edit" element={<EditAppointmentPage />}/>
+                        <Route path="receptionist/appointments" element={<ReceptionistAppointmentsPage />}/>
                         <Route path="patients" element={<PatientsPage />} />
                         <Route path="patient/:patientId/medical-card" element={<PatientMedicalCard />} />
                         <Route path="video" element={<StaffVideoRoom />} />
                         <Route path="analyses" element={<LabPage />} />
                         <Route path="analyses/:appointmentServiceId" element={<LabPage />} />
+                        <Route path="/staff/settings" element={<StaffSettings />} />
+                        <Route path="/staff/receptionist/settings" element={<ReceptionistSettingsPage />}/>
+                        <Route path="/staff/receptionist/patients" element={<ReceptionistPatientsPage />}/>
+                        <Route path="doctors" element={<DoctorsPage />} />
+                        <Route
+                            path="admin"
+                            element={
+                                staffUser?.role === "admin"
+                                    ? <AdminDashboard />
+                                    : <Navigate to="/staff" />
+                            }
+                        />
                     </Route>
+
                 </Routes>
             </div>
 

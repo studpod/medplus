@@ -21,17 +21,14 @@ class Appointment extends Model
     {
         return $this->belongsTo(Patient::class);
     }
-
     public function doctor()
     {
         return $this->belongsTo(Doctor::class);
     }
-
     public function medicalRecord()
     {
         return $this->hasOne(MedicalRecord::class);
     }
-
     public function appointmentServices()
     {
         return $this->hasMany(AppointmentService::class);

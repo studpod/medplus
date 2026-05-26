@@ -2,12 +2,11 @@ import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
-import "../styles/staff-login.scss";
 
+import styles from "../styles/staff-login.module.scss";
 import logo from "../../assets/logo.png";
 
-export default function StaffLogin({ setUser }) {
-
+export default function StaffLogin({ setUser, setAdminUser }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -16,6 +15,7 @@ export default function StaffLogin({ setUser }) {
 
     const login = async (e) => {
         e.preventDefault();
+        setError("");
 
         try {
             const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -38,13 +38,19 @@ export default function StaffLogin({ setUser }) {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error);
+                throw new Error(data.error || "Помилка входу");
             }
 
-            localStorage.setItem("staff_user", JSON.stringify(data));
             localStorage.setItem("token", token);
+            localStorage.setItem("staff_user", JSON.stringify(data));
 
             setUser(data);
+
+
+            if (data.role === "admin") {
+                navigate("/staff/admin");
+                return;
+            }
 
             navigate("/staff");
 
@@ -54,15 +60,12 @@ export default function StaffLogin({ setUser }) {
     };
 
     return (
-        <div className="staff-login">
-
-
-            <div className="staff-login__brand">
+        <div className={styles.wrapper}>
+            <div className={styles.brand}>
                 <img src={logo} alt="MedPlus" />
             </div>
 
-            <form onSubmit={login} className="staff-login-card">
-
+            <form onSubmit={login} className={styles.card}>
                 <h2>Вхід для персоналу</h2>
 
                 <input
@@ -70,6 +73,7 @@ export default function StaffLogin({ setUser }) {
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    required
                 />
 
                 <input
@@ -77,16 +81,15 @@ export default function StaffLogin({ setUser }) {
                     placeholder="Пароль"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
                 />
 
-                {error && <p className="error">{error}</p>}
+                {error && <p className={styles.error}>{error}</p>}
 
                 <button type="submit">
                     Увійти
                 </button>
-
             </form>
-
         </div>
     );
 }

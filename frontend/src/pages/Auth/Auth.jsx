@@ -6,7 +6,8 @@ import {
     signInWithEmailAndPassword,
     sendEmailVerification
 } from "firebase/auth";
-import "./Auth.scss";
+
+import styles from "./Auth.module.scss";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
 
@@ -35,7 +36,6 @@ export default function Auth() {
         setError("");
 
         try {
-
             if (activeTab === "register") {
                 if (password !== passwordConfirm) {
                     setError("Паролі не співпадають");
@@ -53,10 +53,8 @@ export default function Auth() {
                 await sendEmailVerification(firebaseUser);
 
                 toast.info("На пошту надіслано лист підтвердження");
-
                 return;
             }
-
 
             if (activeTab === "login") {
                 const userCredential = await signInWithEmailAndPassword(
@@ -72,7 +70,6 @@ export default function Auth() {
                     return;
                 }
 
-
                 return;
             }
 
@@ -83,13 +80,13 @@ export default function Auth() {
     };
 
     return (
-        <div className="auth">
-            <div className="auth__container">
+        <div className={styles.wrapper}>
+            <div className={styles.container}>
 
                 {/* TABS */}
-                <div className="auth__tabs">
+                <div className={styles.tabs}>
                     <button
-                        className={activeTab === "login" ? "active" : ""}
+                        className={activeTab === "login" ? styles.active : ""}
                         onClick={() => setActiveTab("login")}
                         type="button"
                     >
@@ -97,7 +94,7 @@ export default function Auth() {
                     </button>
 
                     <button
-                        className={activeTab === "register" ? "active" : ""}
+                        className={activeTab === "register" ? styles.active : ""}
                         onClick={() => setActiveTab("register")}
                         type="button"
                     >
@@ -106,7 +103,7 @@ export default function Auth() {
                 </div>
 
                 {/* FORM */}
-                <form className="auth__form" onSubmit={handleSubmit}>
+                <form className={styles.form} onSubmit={handleSubmit}>
                     <input
                         type="email"
                         placeholder="Email"
@@ -133,9 +130,9 @@ export default function Auth() {
                         />
                     )}
 
-                    {error && <p className="auth__error">{error}</p>}
+                    {error && <p className={styles.error}>{error}</p>}
 
-                    <button type="submit" className="auth__btn">
+                    <button type="submit" className={styles.button}>
                         {activeTab === "login" ? "Увійти" : "Зареєструватись"}
                     </button>
                 </form>

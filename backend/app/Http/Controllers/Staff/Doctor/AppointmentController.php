@@ -90,7 +90,7 @@ class AppointmentController extends Controller
             'doctor',
             'appointmentServices.service',
             'appointmentServices.labsResults.labsFiles',
-            'appointmentServices.diagnosticReport',
+//            'appointmentServices.diagnosticReport',
             'medicalRecord'
         ])->findOrFail($id);
 
@@ -187,72 +187,88 @@ class AppointmentController extends Controller
     {
         $appointment = Appointment::with([
             'appointmentServices.service',
-            'medicalRecord',
             'appointmentServices.labsResults',
-            'appointmentServices.procedureLog',
-            'appointmentServices.diagnosticReport'
+            'medicalRecord'
         ])->find($appointmentId);
 
         if (!$appointment) {
-            return response()->json(['error' => 'Прийом не знайдено'], 404);
+            return response()->json([
+                'error' => 'Прийом не знайдено'
+            ], 404);
         }
 
         if ($appointment->status !== 'expected') {
-            return response()->json(['error' => 'Прийом вже завершено або скасовано'], 400);
+            return response()->json([
+                'error' => 'Прийом вже завершено або скасовано'
+            ], 400);
         }
 
         $services = $appointment->appointmentServices;
 
-        $hasConsultation = false;
-        $hasProcedure = false;
-        $hasDiagnostics = false;
+        $needsMedicalRecord = false;
+        $missingLabResults = false;
 
-        $procedureError = false;
-        $diagnosticError = false;
+        foreach ($services as $serviceItem) {
 
-        foreach ($services as $s) {
-            $type = $s->service->type;
+            $type = $serviceItem->service?->type;
 
-            if (in_array($type, ['consultation', 'checkup'])) {
-                $hasConsultation = true;
+            /*
+            |--------------------------------------------------------------------------
+            | consultation / checkup / diagnostics
+            |--------------------------------------------------------------------------
+            */
+
+            if (in_array($type, [
+                'consultation',
+                'checkup',
+                'diagnostics'
+            ])) {
+                $needsMedicalRecord = true;
             }
 
-            if ($type === 'procedure') {
-                $hasProcedure = true;
+            /*
+            |--------------------------------------------------------------------------
+            | lab_test
+            |--------------------------------------------------------------------------
+            */
 
-                if (!$s->procedureLog || !$s->procedureLog->is_done) {
-                    $procedureError = true;
-                }
-            }
+            if ($type === 'lab_test') {
 
-            if ($type === 'diagnostics') {
-                $hasDiagnostics = true;
-
-                if (!$s->diagnosticReport) {
-                    $diagnosticError = true;
+                if ($serviceItem->labsResults->isEmpty()) {
+                    $missingLabResults = true;
                 }
             }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Medical Record validation
+        |--------------------------------------------------------------------------
+        */
 
-        if ($hasConsultation && !$appointment->medicalRecord) {
+        if ($needsMedicalRecord && !$appointment->medicalRecord) {
             return response()->json([
                 'error' => 'Потрібно заповнити медичну картку!'
             ], 422);
         }
 
-        if ($procedureError) {
+        /*
+        |--------------------------------------------------------------------------
+        | Lab validation
+        |--------------------------------------------------------------------------
+        */
+
+        if ($missingLabResults) {
             return response()->json([
-                'error' => 'Не всі процедури виконані!'
+                'error' => 'Не всі аналізи заповнені!'
             ], 422);
         }
 
-        if ($diagnosticError) {
-            return response()->json([
-                'error' => 'Не додано результати діагностики!'
-            ], 422);
-        }
-
+        /*
+        |--------------------------------------------------------------------------
+        | Complete appointment
+        |--------------------------------------------------------------------------
+        */
 
         $oldStatus = $appointment->status;
 

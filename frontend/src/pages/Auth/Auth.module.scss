@@ -1,0 +1,91 @@
+@import '../../styles/variables';
+
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  background-color: #f7f8fb;
+  padding: 40px 20px;
+}
+
+.container {
+  background-color: white;
+  padding: 40px 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 25px;
+
+  button {
+    flex: 1;
+    padding: 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+    border-bottom: 2px solid transparent;
+    transition: 0.3s;
+
+    &:hover {
+      color: $primary-color;
+    }
+  }
+}
+
+.active {
+  color: $primary-color;
+  border-bottom: 2px solid $primary-color;
+}
+
+/* FORM */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  input {
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    transition: 0.3s;
+
+    &:focus {
+      border-color: $primary-color;
+      outline: none;
+    }
+  }
+}
+
+/* BUTTON */
+.button {
+  background-color: $accent-color;
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  border: none;
+
+  &:hover {
+    background-color: darken($accent-color, 8%);
+  }
+}
+
+/* ERROR */
+.error {
+  color: #ef4444;
+  font-size: 14px;
+}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../../../api";
-import {toast} from "react-toastify";
-import { FaRegSave } from "react-icons/fa";
+import { toast } from "react-toastify";
+import { FaRegSave, FaEdit } from "react-icons/fa";
 
 const fields = [
     { name: "chief_complaint", label: "Скарги" },
@@ -14,9 +14,11 @@ const fields = [
 ];
 
 export default function ConsultationBlock({ appointment, refresh }) {
-    const [loading, setLoading] = useState(false);
 
     const hasMedicalRecord = !!appointment?.medical_record;
+
+    const [isEditing, setIsEditing] = useState(!hasMedicalRecord);
+    const [loading, setLoading] = useState(false);
 
     const [form, setForm] = useState({
         chief_complaint: "",
@@ -31,6 +33,7 @@ export default function ConsultationBlock({ appointment, refresh }) {
     useEffect(() => {
         if (appointment?.medical_record) {
             setForm(appointment.medical_record);
+            setIsEditing(false);
         }
     }, [appointment]);
 
@@ -42,18 +45,30 @@ export default function ConsultationBlock({ appointment, refresh }) {
         setLoading(true);
 
         try {
-            await API.post(
-                `/doctor/control/patient/${appointment.patient.id}/medical-card/add`,
-                {
-                    ...form,
-                    appointment_id: appointment.id
-                }
-            );
-            toast.success("Запис успішно доданий!")
+            if (hasMedicalRecord) {
 
+                await API.put(
+                    `/doctor/control/patient/${appointment.patient.id}/medical-card/${appointment.medical_record.id}`,
+                    form
+                );
+                toast.success("Запис оновлено!");
+            } else {
+
+                await API.post(
+                    `/doctor/control/patient/${appointment.patient.id}/medical-card/add`,
+                    {
+                        ...form,
+                        appointment_id: appointment.id
+                    }
+                );
+                toast.success("Запис створено!");
+            }
+
+            setIsEditing(false);
             refresh();
+
         } catch (e) {
-            console.error(e);
+            toast.error("Помилка");
         } finally {
             setLoading(false);
         }
@@ -67,21 +82,30 @@ export default function ConsultationBlock({ appointment, refresh }) {
                     <h3>Медична карта</h3>
                     <span>
                         {hasMedicalRecord
-                            ? "Запис вже створено"
-                            : "Заповніть дані прийому"}
+                            ? "Запис створено"
+                            : "Заповніть дані"}
                     </span>
                 </div>
 
-                {!hasMedicalRecord && (
+
+                {hasMedicalRecord && !isEditing && (
+                    <button
+                        className="save-btn"
+                        onClick={() => setIsEditing(true)}
+                    >
+                        <FaEdit style={{ marginRight: 8 }} />
+                        Редагувати
+                    </button>
+                )}
+
+                {isEditing && (
                     <button
                         className="save-btn"
                         onClick={save}
                         disabled={loading}
                     >
-                        {loading ? "..." :  <>
-                            <FaRegSave style={{ marginRight: "8px" }} />
-                            Зберегти
-                        </>}
+                        <FaRegSave style={{ marginRight: 8 }} />
+                        {loading ? "..." : "Зберегти"}
                     </button>
                 )}
             </div>
@@ -98,8 +122,7 @@ export default function ConsultationBlock({ appointment, refresh }) {
                             name={field.name}
                             value={form[field.name] || ""}
                             onChange={handleChange}
-                            placeholder={`Введіть ${field.label.toLowerCase()}...`}
-                            disabled={hasMedicalRecord}
+                            disabled={!isEditing}
                         />
                     </div>
                 ))}
