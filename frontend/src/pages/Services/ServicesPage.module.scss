@@ -1,0 +1,182 @@
+.wrapper {
+  display: flex;
+  gap: 20px;
+  min-height: 100vh;
+  background: #f6f7fb;
+}
+
+.sidebar {
+  width: 220px;
+  margin: 20px;
+  padding: 14px;
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #eee;
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+.sidebarTitle {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.item {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 6px;
+
+  &:hover {
+    background: #f1f5ff;
+  }
+}
+
+.active {
+  background: #2563eb;
+  color: white;
+}
+
+.content {
+  flex: 1;
+  padding: 25px;
+}
+
+
+
+.tableWrapper {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,.05);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    background: #2563eb;
+    color: white;
+    text-align: left;
+    padding: 16px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  td {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+    font-size: 14px;
+    color: #444;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr {
+    transition: 0.2s;
+  }
+
+  tbody tr:hover {
+    background: #f8faff;
+  }
+}
+
+.serviceName {
+  font-weight: 600;
+  color: #222;
+}
+
+.price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2563eb;
+  white-space: nowrap;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+
+  h3 {
+    font-size: 18px;
+    margin: 0;
+  }
+}
+
+.price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.type {
+  color: #777;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.description {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.btn {
+  width: 100%;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+  font-weight: 500;
+
+  &:hover {
+    background: #1d4ed8;
+  }
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.skeletonLine {
+  height: 14px;
+  width: 80%;
+  background: #e5e7eb;
+  border-radius: 6px;
+  animation: pulse 1.2s infinite;
+}
+
+.skeletonLineLong {
+  height: 14px;
+  width: 95%;
+  background: #e5e7eb;
+  border-radius: 6px;
+  animation: pulse 1.2s infinite;
+}
+
+.skeletonItem {
+  height: 32px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: #e5e7eb;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

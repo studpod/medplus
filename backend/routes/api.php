@@ -16,7 +16,10 @@ use App\Http\Controllers\Staff\Admin\{MainAdminController, MedPersonalController
 use App\Http\Controllers\PublicViewController;
 use App\Http\Controllers\VideoSessionController;
 use App\Models\User;
+use App\Models\Patient;
 use function Pest\Laravel\get;
+use Illuminate\Support\Facades\Log;
+
 
 
 Route::middleware(['auth:'])->get('/user', function (Request $request) {
@@ -34,7 +37,10 @@ Route::middleware(FirebaseAuth::class)->group(function(){
 
 });
 
-Route::group(['prefix' => 'public/view'], function () {
+Route::group(['prefix' => 'public'], function () {
+    Route::prefix('view')->group(function () {
+
+
     Route::prefix('/services')->group(function () {
         Route::get('', [PublicViewController::class, 'services']);
         Route::get('/{specializationId}', [PublicViewController::class, 'getBySpecialization']);
@@ -46,8 +52,12 @@ Route::group(['prefix' => 'public/view'], function () {
    });
    Route::get('/specializations', [PublicViewController::class, 'specializations']);
 
-
+    });
+    Route::prefix('control')->group(function () {
+        Route::post('/reception/add-guest', [ReceptionController::class, 'addReceptionGuest']);
+    });
 });
+
 
 //Route::group(['prefix' => 'auth'], function () {
 //    Route::post('/register', [AuthPatientController::class, 'register']); // api/auth/register
@@ -85,32 +95,87 @@ Route::group(['prefix' => 'public/view'], function () {
 //    });
 //
 //});
+//Route::prefix('auth')->group(function () {
+//
+//    Route::post('/sync', function(Request $request) {
+//
+//        $firebaseUser = $request->all();
+//
+//        if (!isset($firebaseUser['uid'])) {
+//            return response()->json([
+//                'error' => 'No Firebase user data'
+//            ], 400);
+//        }
+//
+//        $user = User::firstOrCreate(
+//            ['firebase_uid' => $firebaseUser['uid']],
+//            [
+//                'role' => 'patient',
+//            ]
+//        );
+//
+//        if ($user->role !== 'patient') {
+//            return response()->json([
+//                'error' => 'Access denied'
+//            ], 403);
+//        }
+//
+//        return response()->json($user);
+//    });
+//
+//});
+
+//врех акт
+
 Route::prefix('auth')->group(function () {
 
-    Route::post('/sync', function(Request $request) {
+    Route::post('/sync', function (Request $request) {
 
-        $firebaseUser = $request->all();
+        Log::info('SYNC START', ['request' => $request->all()]);
 
-        if (!isset($firebaseUser['uid'])) {
-            return response()->json([
-                'error' => 'No Firebase user data'
-            ], 400);
+        $uid = $request->input('uid');
+        $email = $request->input('email');
+        $phone = $request->input('phone');
+
+        if (!$uid) {
+            Log::error('NO UID');
+            return response()->json(['error' => 'No UID'], 400);
         }
 
         $user = User::firstOrCreate(
-            ['firebase_uid' => $firebaseUser['uid']],
-            [
-                'role' => 'patient',
-            ]
+            ['firebase_uid' => $uid],
+            ['role' => 'patient']
         );
 
-        if ($user->role !== 'patient') {
-            return response()->json([
-                'error' => 'Access denied'
-            ], 403);
+        Log::info('USER', ['id' => $user->id]);
+
+        if ($phone) {
+
+            $normalized = preg_replace('/\D+/', '', $phone);
+
+            $patient = Patient::all()->first(function ($p) use ($normalized) {
+                return preg_replace('/\D+/', '', $p->phone) === $normalized;
+            });
+
+            Log::info('PATIENT FOUND', [
+                'found' => (bool) $patient
+            ]);
+
+            if ($patient) {
+                $patient->user_id = $user->id;
+                $patient->save();
+
+                Log::info('LINKED SUCCESS', [
+                    'patient_id' => $patient->id,
+                    'user_id' => $user->id
+                ]);
+            }
         }
 
-        return response()->json($user);
+        return response()->json([
+            'user' => $user,
+            'linked' => (bool) $phone
+        ]);
     });
 
 });
@@ -182,7 +247,7 @@ Route::post('/staff/sync', function (Request $request) {
 
     $user = auth()->user();
 
-    if (!in_array($user->role, ['doctor', 'admin'])) {
+    if (!in_array($user->role, ['doctor', 'admin', 'receptionist'])) {
         return response()->json([
             'error' => 'Access denied'
         ], 403);
@@ -197,6 +262,7 @@ Route::middleware([FirebaseAuth::class, 'role:patient'])
     ->prefix('patient')
     ->group(function () {
         Route::prefix('view')->group(function () {
+            Route::get('/me', [PersonalOfficeController::class, 'me']);
              Route::get('/profile',[PersonalOfficeController::class, 'viewProfile']);
              Route::get('/medical-records', [PersonalOfficeController::class, 'viewMedicalRecords']);
             Route::get('receptions', [PersonalOfficeController::class, 'viewReception']);
@@ -205,12 +271,13 @@ Route::middleware([FirebaseAuth::class, 'role:patient'])
         Route::prefix('control')->group(function(){
             Route::prefix('profile')->group(function(){
                 Route::prefix('personal-info')->group(function(){
+                    Route::post('complete', [PersonalOfficeController::class, 'completeProfile']);
                     Route::post('/add', [PersonalOfficeController::class, 'addProfile']);
                     Route::put('/update', [PersonalOfficeController::class, 'updateProfile']);
                 });
             });
             Route::prefix('reception')->group(function(){
-                Route::post('/add', [ReceptionController::class, 'addReception']);
+                Route::post('/add', [ReceptionController::class, 'addReceptionAuth']);
             });
         });
     });

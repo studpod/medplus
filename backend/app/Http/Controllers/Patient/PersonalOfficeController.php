@@ -40,21 +40,15 @@ class PersonalOfficeController extends Controller
 
     // Додавання особистої інформації
    public function addProfile(Request $request){
-
         $user = Auth::user();
-
-
         if ($user->role !== 'patient') {
             return response()->json(['error' => 'Доступ заборонено'], 403);
         }
-
-
         if (Patient::where('user_id', $user->id)->exists()) {
             return response()->json([
                 'error' => 'Профіль вже створено'
             ], 400);
         }
-
         $validated = $request->validate([
             'last_name' => 'required|string|max:255',
             'first_name' => 'required|string|max:255',
@@ -64,7 +58,6 @@ class PersonalOfficeController extends Controller
             'address' => 'nullable|string|max:255',
             'phone' => 'required|string|max:13|unique:patients,phone'
         ]);
-
         $patient = Patient::create([
             'user_id' => $user->id,
             'last_name' => $validated['last_name'],
@@ -75,7 +68,6 @@ class PersonalOfficeController extends Controller
             'phone' => $validated['phone'],
             'address' => $request->input('address')
         ]);
-
         return response()->json([
             'message' => 'Особисті дані успішно збережені',
             'patient' => $patient
@@ -256,4 +248,79 @@ class PersonalOfficeController extends Controller
             'receptions' => $receptions
         ]);
 }
+    public function me(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'error' => 'Неавторизований'
+            ], 401);
+        }
+
+        if ($user->role !== 'patient') {
+            return response()->json([
+                'error' => 'Доступ заборонено'
+            ], 403);
+        }
+
+        $patient = $user->patient;
+
+        if (!$patient) {
+            return response()->json([
+                'patient' => null
+            ], 200);
+        }
+
+        $patient->load('doctor');
+
+        return response()->json([
+            'patient' => [
+                'id' => $patient->id,
+                'first_name' => $patient->first_name,
+                'last_name' => $patient->last_name,
+                'middle_name' => $patient->middle_name,
+                'full_name' => trim($patient->last_name . ' ' . $patient->first_name . ' ' . $patient->middle_name),
+                'phone' => $patient->phone,
+                'doctor' => $patient->doctor,
+            ]
+        ], 200);
+    }
+
+    public function completeProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'last_name'   => 'required|string|max:255',
+            'first_name'  => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+
+            'phone'       => 'required|string',
+
+            'gender'      => 'required|in:male,female',
+            'address'     => 'required|string|max:255',
+            'date_of_birth' => 'required|date',
+            'notes'       => 'nullable|string'
+        ]);
+
+        // якщо вже є пацієнт — оновлюємо
+        $patient = Patient::where('user_id', $user->id)->first();
+
+        if ($patient) {
+            $patient->update($validated);
+        } else {
+            $validated['user_id'] = $user->id;
+            $patient = Patient::create($validated);
+        }
+
+        return response()->json([
+            'message' => 'Profile completed',
+            'patient' => $patient
+        ]);
+    }
 }

@@ -23,8 +23,7 @@ export default function Header({ user, onLogout }) {
                 <nav className="header__nav">
                     <Link to="/departments">Відділення</Link>
                     <Link to="/doctors">Лікарі</Link>
-                    <Link to="/services">Послуги</Link>
-                    <Link to="/prices">Ціни</Link>
+                    <Link to="/services">Послуги та ціни</Link>
                     <Link to="/contact">Контакт</Link>
                 </nav>
 

@@ -38,8 +38,8 @@ class PublicViewController extends Controller
 
     public function getByDoctorsSpecialization($id)
     {
-        $doctors = Doctor::where('specialization_id',$id)
-            ->select('id','first_name','last_name','middle_name')
+        $doctors = Doctor::with(['specialization'])
+            ->where('specialization_id', $id)
             ->get();
 
         return response()->json($doctors);

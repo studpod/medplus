@@ -23,12 +23,10 @@ export default function Home({ user }) {
 
                             <button className="hero__btn"
                                     onClick={() => {
-                                        if (!user) {
-                                            navigate("/auth");
-                                        } else {
+
                                             navigate("/reception");
                                         }
-                                    }}
+                                    }
                             >
                                 Записатися на прийом
                             </button>

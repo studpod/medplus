@@ -1,21 +1,35 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../../firebase";
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     sendEmailVerification
 } from "firebase/auth";
 
-import styles from "./Auth.module.scss";
+import { auth } from "../../firebase";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
 
+import {
+    FaEnvelope,
+    FaLock,
+    FaPhone,
+    FaUserCheck
+} from "react-icons/fa";
+
+import styles from "./Auth.module.scss";
+import API from "../../api";
+
 export default function Auth() {
     const [activeTab, setActiveTab] = useState("login");
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [passwordConfirm, setPasswordConfirm] = useState("");
+
+    const [phone, setPhone] = useState("");
+    const [linkExisting, setLinkExisting] = useState(false);
+
     const [error, setError] = useState("");
 
     const navigate = useNavigate();
@@ -23,52 +37,78 @@ export default function Auth() {
 
     useEffect(() => {
         if (!user) return;
-
-        if (activeTab === "register") {
-            navigate("/cabinet?edit=true");
-        } else {
-            navigate("/");
-        }
+        navigate("/");
     }, [user]);
+
+    const handleSync = async (firebaseUser) => {
+        const token = await firebaseUser.getIdToken();
+
+        await API.post(
+            "/auth/sync",
+            {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                phone: phone || null
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
 
         try {
+            // =========================
+            // REGISTER
+            // =========================
             if (activeTab === "register") {
+
                 if (password !== passwordConfirm) {
                     setError("Паролі не співпадають");
                     return;
                 }
 
-                const userCredential = await createUserWithEmailAndPassword(
+                const cred = await createUserWithEmailAndPassword(
                     auth,
                     email,
                     password
                 );
 
-                const firebaseUser = userCredential.user;
+                await sendEmailVerification(cred.user);
 
-                await sendEmailVerification(firebaseUser);
+                await handleSync(cred.user);
 
-                toast.info("На пошту надіслано лист підтвердження");
+                toast.success("Реєстрація успішна. Перевірте email");
+
+
+                navigate("/complete-profile");
+
                 return;
             }
 
+            // =========================
+            // LOGIN
+            // =========================
             if (activeTab === "login") {
-                const userCredential = await signInWithEmailAndPassword(
+
+                const cred = await signInWithEmailAndPassword(
                     auth,
                     email,
                     password
                 );
 
-                const firebaseUser = userCredential.user;
-
-                if (!firebaseUser.emailVerified) {
-                    toast.error("Підтверди пошту перед входом");
+                if (!cred.user.emailVerified) {
+                    toast.error("Підтвердіть email");
                     return;
                 }
+
+
+                await handleSync(cred.user);
 
                 return;
             }
@@ -86,17 +126,17 @@ export default function Auth() {
                 {/* TABS */}
                 <div className={styles.tabs}>
                     <button
+                        type="button"
                         className={activeTab === "login" ? styles.active : ""}
                         onClick={() => setActiveTab("login")}
-                        type="button"
                     >
                         Авторизація
                     </button>
 
                     <button
+                        type="button"
                         className={activeTab === "register" ? styles.active : ""}
                         onClick={() => setActiveTab("register")}
-                        type="button"
                     >
                         Реєстрація
                     </button>
@@ -104,37 +144,79 @@ export default function Auth() {
 
                 {/* FORM */}
                 <form className={styles.form} onSubmit={handleSubmit}>
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
 
-                    <input
-                        type="password"
-                        placeholder="Пароль"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-
-                    {activeTab === "register" && (
+                    {/* EMAIL */}
+                    <div className={styles.inputWrap}>
+                        <FaEnvelope />
                         <input
-                            type="password"
-                            placeholder="Підтвердження паролю"
-                            value={passwordConfirm}
-                            onChange={(e) => setPasswordConfirm(e.target.value)}
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             required
                         />
+                    </div>
+
+                    {/* PASSWORD */}
+                    <div className={styles.inputWrap}>
+                        <FaLock />
+                        <input
+                            type="password"
+                            placeholder="Пароль"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    {/* CONFIRM */}
+                    {activeTab === "register" && (
+                        <div className={styles.inputWrap}>
+                            <FaLock />
+                            <input
+                                type="password"
+                                placeholder="Підтвердження паролю"
+                                value={passwordConfirm}
+                                onChange={(e) => setPasswordConfirm(e.target.value)}
+                                required
+                            />
+                        </div>
+                    )}
+
+                    {/* CHECK */}
+                    {activeTab === "register" && (
+                        <label className={styles.checkbox}>
+                            <input
+                                type="checkbox"
+                                checked={linkExisting}
+                                onChange={() => setLinkExisting(!linkExisting)}
+                            />
+                            <FaUserCheck />
+                            <span>Я вже записувався на прийом</span>
+                        </label>
+                    )}
+
+                    {/* PHONE */}
+                    {activeTab === "register" && linkExisting && (
+                        <div className={styles.inputWrap}>
+                            <FaPhone />
+                            <input
+                                type="tel"
+                                placeholder="Телефон (як при записі)"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                            />
+                        </div>
                     )}
 
                     {error && <p className={styles.error}>{error}</p>}
 
                     <button type="submit" className={styles.button}>
-                        {activeTab === "login" ? "Увійти" : "Зареєструватись"}
+                        {activeTab === "login"
+                            ? "Увійти"
+                            : "Зареєструватись"}
                     </button>
+
                 </form>
 
             </div>

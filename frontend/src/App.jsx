@@ -15,12 +15,16 @@ import "./styles/global.scss";
 
 
 import Home from "./pages/Home";
+import DoctorPage from "./pages/Departments/DoctorsPage"
 import Header from "./components/Header/Header";
 import Auth from "./pages/Auth/Auth";
 import Cabinet from "./pages/Cabinet/Cabinet";
 import ReceptionPage from "./pages/Appointment/AppointmentPage";
 import Departments from "./pages/Departments/DepartmentsPage";
 import DepartmentDetails from "./components/Departments/DepartmentDetails";
+import CompleteProfile from "./pages/Auth/CompleteProfile/CompleteProfile";
+import ServicePage from "./pages/Services/ServicesPage"
+
 
 import StaffLogin from "./Staff/pages/StaffLogin";
 import StaffDashboard from "./Staff/pages/StaffDashboard";
@@ -45,6 +49,7 @@ import AdminDashboard from "./Staff/Admin/pages/AdminDashboard";
 import DoctorsPage from "./Staff/Admin/pages/DoctorsPage";
 
 import PrivateRoute from "../src/context/PrivateRoute";
+import RequireProfile from "../src/RequireProfile/RequireProfile"
 
 import { ToastContainer } from "react-toastify";
 import { signOut } from "firebase/auth";
@@ -89,26 +94,30 @@ function App() {
                     {/* ПАЦІЄНТ */}
                     <Route path="/" element={<Home user={user} />} />
                     <Route path="/departments" element={<Departments />} />
+                    <Route path="/doctors" element={<DoctorPage />} />
+                    <Route path="/services" element={<ServicePage />} />
                     <Route path="/departments/:slug" element={<DepartmentDetails />} />
                     <Route path="/auth" element={<Auth />} />
-
+                    <Route
+                        path="/complete-profile"
+                        element={
+                            <PrivateRoute>
+                                <CompleteProfile user={user} />
+                            </PrivateRoute>
+                        }
+                    />
                     <Route
                         path="/cabinet"
                         element={
                             <PrivateRoute>
+                                <RequireProfile user={user}>
                                 <Cabinet user={user} />
+                                    </RequireProfile>
                             </PrivateRoute>
                         }
                     />
 
-                    <Route
-                        path="/reception"
-                        element={
-                            <PrivateRoute>
-                                <ReceptionPage />
-                            </PrivateRoute>
-                        }
-                    />
+                    <Route path="/reception" element={<ReceptionPage user={user} />} />
 
                     <Route
                         path="/video"
