@@ -11,6 +11,7 @@ class Receptionist extends Model
         'last_name',
         'middle_name',
         'phone',
+        'user_id'
     ];
     public $timestamps = false;
     public function user()

@@ -14,40 +14,22 @@ class VideoConsultationController extends Controller
     {
         $user = auth()->user();
         $doctor = $user->doctor;
-
-        $validated = $request->validate([
-            'appointment_id' => 'required|exists:appointments,id'
-        ]);
-
-        $appointment = Appointment::findOrFail($validated['appointment_id']);
-
+        $appointment = Appointment::findOrFail($request->appointment_id);
         if ($appointment->doctor_id !== $doctor->id) {
             return response()->json(['error' => 'Access denied'], 403);
         }
-
         if (!$appointment->is_online) {
             return response()->json(['error' => 'Not online appointment'], 400);
         }
-
-        $existingCall = VideoCall::where('appointment_id', $appointment->id)
-            ->whereIn('status', ['waiting', 'active'])
-            ->first();
-
-        if ($existingCall) {
-            return response()->json([
-                'room_id' => $existingCall->room_id
-            ]);
-        }
-        $roomId = 'call_' . rand(100000, 999999);
-
-        VideoCall::create([
-            'appointment_id' => $appointment->id,
-            'room_id' => $roomId,
-            'status' => 'waiting'
-        ]);
-
+        $call = VideoCall::firstOrCreate(
+            ['appointment_id' => $appointment->id],
+            [
+                'room_id' => 'call_' . $appointment->id . '_' . time(),
+                'status' => 'waiting'
+            ]
+        );
         return response()->json([
-            'room_id' => $roomId
+            'room_id' => $call->room_id
         ]);
     }
     public function endVideoCall(Request $request)

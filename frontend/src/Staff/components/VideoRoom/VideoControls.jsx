@@ -1,4 +1,13 @@
 import React from "react";
+import styles from "./VideoCall.module.scss";
+
+import {
+    FaMicrophone,
+    FaMicrophoneSlash,
+    FaVideo,
+    FaVideoSlash,
+    FaPhone
+} from "react-icons/fa";
 
 export default function VideoControls({
                                           mic,
@@ -6,35 +15,22 @@ export default function VideoControls({
                                           toggleMic,
                                           toggleCamera,
                                           endCall
-                                      }){
+                                      }) {
+    return (
+        <div className={styles.controls}>
 
-    return(
-
-        <div className="controls">
-
-            <div
-                className="control-btn mic"
-                onClick={toggleMic}
-            >
-                {mic ? "🎤" : "🔇"}
+            <div className={styles.btn} onClick={toggleMic}>
+                {mic ? <FaMicrophone /> : <FaMicrophoneSlash />}
             </div>
 
-            <div
-                className="control-btn cam"
-                onClick={toggleCamera}
-            >
-                {camera ? "📷" : "🚫"}
+            <div className={styles.btn} onClick={toggleCamera}>
+                {camera ? <FaVideo /> : <FaVideoSlash />}
             </div>
 
-            <div
-                className="control-btn end"
-                onClick={endCall}
-            >
-                📞
+            <div className={`${styles.btn} ${styles.end}`} onClick={endCall}>
+                <FaPhone />
             </div>
 
         </div>
-
-    )
-
+    );
 }

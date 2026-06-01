@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import API from "../../api";
-import "./video.module.scss";
+import styles from "./video.module.scss";
 
 export default function StaffVideoRoom() {
     const [appointments, setAppointments] = useState([]);
@@ -15,76 +15,58 @@ export default function StaffVideoRoom() {
             setLoading(true);
             const res = await API.get("/doctor/view/appointments/online");
             setAppointments(res.data.appointments || []);
-        } catch (e) {
-            console.error(e);
         } finally {
             setLoading(false);
         }
     };
 
     const startCall = async (appointment) => {
-        try {
-            const res = await API.post("/doctor/control/video-call/start", {
-                appointment_id: appointment.id
-            });
+        const res = await API.post("/doctor/control/video-call/start", {
+            appointment_id: appointment.id
+        });
 
-            const roomId = res.data.room_id;
+        const roomId = res.data.room_id;
 
-            window.open(
-                `/staff/video/waiting/${appointment.id}?room=${roomId}`,
-                "_blank"
-            );
-        } catch (err) {
-            console.error(err);
-            alert("Не вдалося створити дзвінок");
-        }
+        window.open(
+            `/staff/video/waiting/${appointment.id}?room=${roomId}`,
+            "_blank"
+        );
     };
 
-    const formatTime = (time) => {
-        if (!time) return "";
-        return time.slice(0, 5);
-    };
-
+    const formatTime = (t) => (t ? t.slice(0, 5) : "");
 
     const formatDate = (date) => {
-        if (!date) return "";
-
         const d = new Date(date);
-        const day = String(d.getDate()).padStart(2, "0");
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const year = String(d.getFullYear()).slice(-2);
-
-        return `${day}.${month}.${year}`;
+        return `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()}`;
     };
 
     const getStatus = (status) => {
         switch (status) {
             case "expected":
-                return { label: "Очікується", class: "status expected" };
+                return { label: "Очікується", className: styles.expected };
             case "completed":
-                return { label: "Завершено", class: "status done" };
+                return { label: "Завершено", className: styles.done };
             case "cancelled":
-                return { label: "Скасовано", class: "status cancel" };
+                return { label: "Скасовано", className: styles.cancel };
             default:
-                return { label: status, class: "status" };
+                return { label: status, className: styles.status };
         }
     };
 
     return (
-        <div className="online-page">
+        <div className={styles.onlinePage}>
             <h1>Онлайн консультації</h1>
 
             {loading ? (
-                <VideoSkeleton />
+                <div>Loading...</div>
             ) : appointments.length === 0 ? (
-                <div className="empty-state">
+                <div className={styles.emptyState}>
                     Немає онлайн записів
                 </div>
             ) : (
-                <div className="video-table">
+                <div className={styles.videoTable}>
 
-                    {/* HEADER */}
-                    <div className="table-header">
+                    <div className={styles.tableHeader}>
                         <div>Пацієнт</div>
                         <div>Дата</div>
                         <div>Статус</div>
@@ -95,35 +77,27 @@ export default function StaffVideoRoom() {
                         const status = getStatus(a.status);
 
                         return (
-                            <div key={a.id} className="table-row">
+                            <div key={a.id} className={styles.tableRow}>
 
-                                {/* Пацієнт */}
-                                <div className="patient">
-                                    <div className="avatar">👤</div>
+                                <div className={styles.patient}>
+                                    <div className={styles.avatar}>👤</div>
                                     <div>
-                                        <div className="name">{a.patient_name}</div>
-                                        <div className="time">
-                                            🕒 {formatTime(a.time)}
-                                        </div>
+                                        <div className={styles.name}>{a.patient_name}</div>
+                                        <div className={styles.time}>🕒 {formatTime(a.time)}</div>
                                     </div>
                                 </div>
 
-                                {/* Дата */}
-                                <div>
-                                    📅 {formatDate(a.date)}
-                                </div>
+                                <div>📅 {formatDate(a.date)}</div>
 
-                                {/* Статус */}
                                 <div>
-                                    <span className={status.class}>
+                                    <span className={`${styles.status} ${status.className}`}>
                                         {status.label}
                                     </span>
                                 </div>
 
-                                {/* Дії */}
                                 <div>
                                     <button
-                                        className="start-btn"
+                                        className={styles.startBtn}
                                         onClick={() => startCall(a)}
                                     >
                                         ▶ Почати
@@ -135,22 +109,6 @@ export default function StaffVideoRoom() {
                     })}
                 </div>
             )}
-        </div>
-    );
-}
-
-
-function VideoSkeleton() {
-    return (
-        <div className="video-table">
-            {[1,2,3,4].map(i => (
-                <div key={i} className="table-row skeleton">
-                    <div className="sk sk-line"></div>
-                    <div className="sk sk-line"></div>
-                    <div className="sk sk-line"></div>
-                    <div className="sk sk-btn"></div>
-                </div>
-            ))}
         </div>
     );
 }

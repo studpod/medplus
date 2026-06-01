@@ -11,7 +11,8 @@ class Service extends Model
         'description',
         'price',
         'doctor_id',
-        'type'
+        'type',
+        'specialization_id'
     ];
    public $timestamps = false;
     public function doctor()

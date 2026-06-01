@@ -1,157 +1,170 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
-import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc } from "firebase/firestore";
-import { toast } from "react-toastify";
-import "../Staff/pages/video.module.scss";
+import {
+    doc,
+    getDoc,
+    collection,
+    addDoc,
+    onSnapshot,
+    updateDoc
+} from "firebase/firestore";
+
+import {
+    FiMic,
+    FiMicOff,
+    FiVideo,
+    FiVideoOff,
+    FiPhoneOff
+} from "react-icons/fi";
+
+import styles from "./VideoCall.module.scss";
 
 export default function VideoPage() {
     const { room } = useParams();
     const navigate = useNavigate();
 
-    const [joined, setJoined] = useState(false);
-    const [mic,setMic] = useState(true);
-    const [camera,setCamera] = useState(true);
-    const [isSpeakingLocal,setIsSpeakingLocal] = useState(false);
-    const [isSpeakingRemote,setIsSpeakingRemote] = useState(false);
-    const callEndedToastShown = useRef(false);
+    const [mic, setMic] = useState(true);
+    const [cam, setCam] = useState(true);
 
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
     const pcRef = useRef(null);
-    const localStreamRef = useRef(null);
+    const streamRef = useRef(null);
 
-    const configuration = { iceServers:[{urls:"stun:stun.l.google.com:19302"}] };
+    useEffect(() => {
+        if (!room) return;
 
-    useEffect(()=>{ if(room) joinRoom(room); },[room]);
+        const join = async () => {
+            const roomRef = doc(db, "rooms", room);
+            const roomSnap = await getDoc(roomRef);
+            if (!roomSnap.exists()) return;
 
-    const detectSpeaking = (stream,setState)=>{
-        if(!stream) return;
-        const audioContext = new AudioContext();
-        const analyser = audioContext.createAnalyser();
-        const source = audioContext.createMediaStreamSource(stream);
-        source.connect(analyser);
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        const check = ()=>{
-            const track = stream.getAudioTracks()[0];
-            if(!track || !track.enabled) setState(false);
-            else{
-                analyser.getByteFrequencyData(dataArray);
-                const volume = dataArray.reduce((a,b)=>a+b,0)/dataArray.length;
-                setState(volume>25);
-            }
-            requestAnimationFrame(check);
-        };
-        check();
-    };
+            pcRef.current = new RTCPeerConnection({
+                iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+            });
 
-    const joinRoom = async (roomId)=>{
-        const roomRef = doc(db,"rooms",roomId);
-        const roomSnapshot = await getDoc(roomRef);
-        if(!roomSnapshot.exists()){
-            if(!callEndedToastShown.current){
-                toast.info("Лікар завершив дзвінок");
-                callEndedToastShown.current = true;
-            }
-            navigate("/", { replace:true });
-            return;
-        }
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: true
+            });
 
-        pcRef.current = new RTCPeerConnection(configuration);
-        const localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
-        localStreamRef.current = localStream;
-        localVideoRef.current.srcObject = localStream;
+            streamRef.current = stream;
+            localVideoRef.current.srcObject = stream;
 
-        detectSpeaking(localStream,setIsSpeakingLocal);
-        localStream.getTracks().forEach(track=>pcRef.current.addTrack(track,localStream));
+            stream.getTracks().forEach(track =>
+                pcRef.current.addTrack(track, stream)
+            );
 
-        pcRef.current.ontrack = (event)=>{
-            const stream = event.streams[0];
-            if(remoteVideoRef.current.srcObject !== stream){
-                if(remoteVideoRef.current?.srcObject){
-                    remoteVideoRef.current.srcObject.getTracks().forEach(t=>t.stop());
+            const callerCandidates = collection(roomRef, "callerCandidates");
+            const calleeCandidates = collection(roomRef, "calleeCandidates");
+
+            pcRef.current.ontrack = (event) => {
+                remoteVideoRef.current.srcObject = event.streams[0];
+            };
+
+            pcRef.current.onicecandidate = (e) => {
+                if (e.candidate) {
+                    addDoc(calleeCandidates, e.candidate.toJSON());
                 }
-                remoteVideoRef.current.srcObject = stream;
-                detectSpeaking(stream,setIsSpeakingRemote);
-            }
-            remoteVideoRef.current.muted = false;
+            };
+
+            onSnapshot(callerCandidates, (snapshot) => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === "added") {
+                        pcRef.current.addIceCandidate(
+                            new RTCIceCandidate(change.doc.data())
+                        );
+                    }
+                });
+            });
+
+            const data = roomSnap.data();
+
+            await pcRef.current.setRemoteDescription(
+                new RTCSessionDescription(data.offer)
+            );
+
+            const answer = await pcRef.current.createAnswer();
+            await pcRef.current.setLocalDescription(answer);
+
+            await updateDoc(roomRef, {
+                answer: {
+                    type: answer.type,
+                    sdp: answer.sdp
+                }
+            });
         };
 
-        const callerCandidates = collection(roomRef,"callerCandidates");
-        const calleeCandidates = collection(roomRef,"calleeCandidates");
+        join();
 
-        pcRef.current.onicecandidate = e=>{if(e.candidate) addDoc(calleeCandidates,e.candidate.toJSON());};
+        return () => {
+            streamRef.current?.getTracks().forEach(t => t.stop());
+            pcRef.current?.close();
+        };
+    }, [room]);
 
-        await pcRef.current.setRemoteDescription(new RTCSessionDescription(roomSnapshot.data().offer));
-        const answer = await pcRef.current.createAnswer();
-        await pcRef.current.setLocalDescription(answer);
-        await updateDoc(roomRef,{answer:{type:answer.type,sdp:answer.sdp}});
-
-        onSnapshot(roomRef,snap=>{
-            if(!snap.exists() && !callEndedToastShown.current){
-                callEndedToastShown.current = true;
-                toast.info("Лікар завершив дзвінок");
-                leaveCall();
-            }
-        });
-
-        setJoined(true);
+    const toggleMic = () => {
+        const track = streamRef.current?.getAudioTracks()[0];
+        if (!track) return;
+        track.enabled = !track.enabled;
+        setMic(track.enabled);
     };
 
-    const toggleMic = ()=>{
-        const stream = localStreamRef.current;
-        if(!stream) return;
-        const oldTrack = stream.getAudioTracks()[0];
-        if(!oldTrack) return;
-
-        const newTrack = oldTrack.clone();
-        newTrack.enabled = !mic;
-        const sender = pcRef.current?.getSenders().find(s=>s.track&&s.track.kind==="audio");
-        if(sender) sender.replaceTrack(newTrack);
-        stream.removeTrack(oldTrack);
-        stream.addTrack(newTrack);
-        setMic(newTrack.enabled);
+    const toggleCam = () => {
+        const track = streamRef.current?.getVideoTracks()[0];
+        if (!track) return;
+        track.enabled = !track.enabled;
+        setCam(track.enabled);
     };
 
-    const toggleCamera = ()=>{
-        const track = localStreamRef.current.getVideoTracks()[0];
-        if(!track) return;
-        track.enabled = !camera;
-        setCamera(track.enabled);
-    };
-
-    const leaveCall = ()=>{
+    const endCall = () => {
+        streamRef.current?.getTracks().forEach(t => t.stop());
         pcRef.current?.close();
-        localStreamRef.current?.getTracks().forEach(t=>t.stop());
-        if(localVideoRef.current?.srcObject){
-            localVideoRef.current.srcObject.getTracks().forEach(t=>t.stop());
-            localVideoRef.current.srcObject = null;
-        }
-        if(remoteVideoRef.current?.srcObject){
-            remoteVideoRef.current.srcObject.getTracks().forEach(t=>t.stop());
-            remoteVideoRef.current.srcObject = null;
-        }
-        setJoined(false);
-        navigate("/", { replace:true });
+        navigate("/", { replace: true });
     };
 
-    return(
-        <div className="video-room">
-            <div className={`remote-video-wrapper ${isSpeakingRemote?"speaking":""}`}>
-                <video ref={remoteVideoRef} autoPlay playsInline className="remote-video"/>
-                <div className="username">Лікар</div>
+    return (
+        <div className={styles.room}>
+
+            <div className={styles.remote}>
+                <video
+                    ref={remoteVideoRef}
+                    autoPlay
+                    playsInline
+                    className={styles.remoteVideo}
+                />
+                <div className={styles.remoteLabel}>Лікар</div>
             </div>
 
-            <div className={`local-video-wrapper ${isSpeakingLocal?"speaking":""}`}>
-                <video ref={localVideoRef} autoPlay playsInline muted/>
-                <div className="username">Ви</div>
+            <div className={styles.local}>
+                <video
+                    ref={localVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={styles.localVideo}
+                />
+                <div className={styles.remoteLabel}>Ви</div>
             </div>
 
-            <div className="controls">
-                <div className={`control-btn mic ${mic?"":"off"}`} onClick={toggleMic}>{mic?"🎤":"🔇"}</div>
-                <div className={`control-btn cam ${camera?"":"off"}`} onClick={toggleCamera}>{camera?"📷":"🚫"}</div>
-                <div className="control-btn end" onClick={leaveCall}>📞</div>
+            {/* CONTROLS */}
+            <div className={styles.controls}>
+
+                <button className={styles.btn} onClick={toggleMic}>
+                    {mic ? <FiMic /> : <FiMicOff />}
+                </button>
+
+                <button className={styles.btn} onClick={toggleCam}>
+                    {cam ? <FiVideo /> : <FiVideoOff />}
+                </button>
+
+                <button className={`${styles.btn} ${styles.end}`} onClick={endCall}>
+                    <FiPhoneOff />
+                </button>
+
             </div>
+
         </div>
     );
 }

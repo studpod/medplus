@@ -1,175 +1,162 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import styles from "./VideoCall.module.scss";
+
 import { db } from "../../../firebase";
-import { setDoc, doc, deleteDoc, collection, onSnapshot, addDoc } from "firebase/firestore";
-import { toast } from "react-toastify";
+import {
+    doc,
+    setDoc,
+    collection,
+    addDoc,
+    onSnapshot
+} from "firebase/firestore";
+
 import VideoControls from "./VideoControls";
-import API from "../../../api";
-import "../../pages/video.module.scss";
 
 export default function VideoCall({ roomIdProp }) {
-    const navigate = useNavigate();
 
-    const [camera, setCamera] = useState(true);
     const [mic, setMic] = useState(true);
-    const [currentTime, setCurrentTime] = useState("");
-    const [isSpeakingLocal, setIsSpeakingLocal] = useState(false);
-    const [isSpeakingRemote, setIsSpeakingRemote] = useState(false);
+    const [cam, setCam] = useState(true);
 
-    const localVideoRef = useRef(null);
-    const remoteVideoRef = useRef(null);
-    const localStreamRef = useRef(null);
-    const pcRef = useRef(null);
-    const roomRefRef = useRef(null);
-
-    const configuration = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-
-    useEffect(() => { startRoom(); }, []);
-
+    const localVideo = useRef(null);
+    const remoteVideo = useRef(null);
+    const pc = useRef(null);
+    const streamRef = useRef(null);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            const now = new Date();
-            setCurrentTime(`${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`);
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
+        if (!roomIdProp) return;
 
-    
-    const detectSpeaking = (stream, setState) => {
-        const audioContext = new AudioContext();
-        const analyser = audioContext.createAnalyser();
-        const source = audioContext.createMediaStreamSource(stream);
-        source.connect(analyser);
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        const check = () => {
-            analyser.getByteFrequencyData(dataArray);
-            const volume = dataArray.reduce((a,b)=>a+b,0)/dataArray.length;
-            const track = stream.getAudioTracks()[0];
-            setState(track?.enabled && volume > 25);
-            requestAnimationFrame(check);
-        };
-        check();
-    };
+        const start = async () => {
+            pc.current = new RTCPeerConnection({
+                iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+            });
 
-    
-    const startRoom = async () => {
-        pcRef.current = new RTCPeerConnection(configuration);
-        const localStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
-        localStreamRef.current = localStream;
-        localVideoRef.current.srcObject = localStream;
-        detectSpeaking(localStream, setIsSpeakingLocal);
-        localStream.getTracks().forEach(track => pcRef.current.addTrack(track, localStream));
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: true
+            });
 
-        pcRef.current.ontrack = (event) => {
-            const stream = event.streams[0];
-            if(remoteVideoRef.current.srcObject !== stream){
-                remoteVideoRef.current.srcObject = stream;
-                detectSpeaking(stream,setIsSpeakingRemote);
-            }
-            remoteVideoRef.current.muted = false;
-        };
+            streamRef.current = stream;
+            localVideo.current.srcObject = stream;
 
-        const roomRef = doc(db,"rooms",roomIdProp);
-        roomRefRef.current = roomRef;
+            stream.getTracks().forEach(track =>
+                pc.current.addTrack(track, stream)
+            );
 
-        const callerCandidates = collection(roomRef,"callerCandidates");
-        const calleeCandidates = collection(roomRef,"calleeCandidates");
+            const roomRef = doc(db, "rooms", roomIdProp);
+            const callerCandidates = collection(roomRef, "callerCandidates");
+            const calleeCandidates = collection(roomRef, "calleeCandidates");
 
-        pcRef.current.onicecandidate = e => { if(e.candidate) addDoc(callerCandidates,e.candidate.toJSON()); };
+            onSnapshot(roomRef, (snap) => {
+                const data = snap.data();
+                if (!data) return;
 
-        const offer = await pcRef.current.createOffer();
-        await pcRef.current.setLocalDescription(offer);
-        await setDoc(roomRef,{offer:{type:offer.type,sdp:offer.sdp}});
-
-        let isAnswerSet = false;
-        onSnapshot(roomRef,snap=>{
-            const data = snap.data();
-            if(!pcRef.current) return;
-            if(!data){ 
-                handleRemoteLeave();
-            }
-            if(data?.answer && !isAnswerSet){
-                pcRef.current.setRemoteDescription(new RTCSessionDescription(data.answer))
-                .then(()=>{isAnswerSet=true;}).catch(()=>{});
-            }
-        });
-
-        onSnapshot(calleeCandidates, snapshot=>{
-            snapshot.docChanges().forEach(change=>{
-                if(change.type==="added"){
-                    pcRef.current.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+                if (data.answer && !pc.current.currentRemoteDescription) {
+                    pc.current.setRemoteDescription(
+                        new RTCSessionDescription(data.answer)
+                    );
                 }
             });
-        });
-    };
 
-    const handleRemoteLeave = () => {
-        if(remoteVideoRef.current?.srcObject){
-            remoteVideoRef.current.srcObject.getTracks().forEach(t=>t.stop());
-            remoteVideoRef.current.srcObject = null;
-        }
-        toast.info("Пацієнт вийшов з дзвінка");
-    };
+            pc.current.onicecandidate = (e) => {
+                if (e.candidate) {
+                    addDoc(callerCandidates, e.candidate.toJSON());
+                }
+            };
 
-    const toggleCamera = () => {
-        const track = localStreamRef.current.getVideoTracks()[0];
-        track.enabled = !track.enabled;
-        setCamera(track.enabled);
-    };
+            onSnapshot(calleeCandidates, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        pc.current.addIceCandidate(
+                            new RTCIceCandidate(change.doc.data())
+                        );
+                    }
+                });
+            });
+
+            pc.current.ontrack = (event) => {
+                remoteVideo.current.srcObject = event.streams[0];
+            };
+
+            const offer = await pc.current.createOffer();
+            await pc.current.setLocalDescription(offer);
+
+            await setDoc(roomRef, {
+                offer: {
+                    type: offer.type,
+                    sdp: offer.sdp
+                }
+            }, { merge: true });
+        };
+
+        start();
+
+        return () => {
+            streamRef.current?.getTracks().forEach(t => t.stop());
+            pc.current?.close();
+        };
+    }, [roomIdProp]);
 
     const toggleMic = () => {
-        const track = localStreamRef.current.getAudioTracks()[0];
-        if(!track) return;
+        const stream = streamRef.current;
+        if (!stream) return;
+
+        const track = stream.getAudioTracks()[0];
+        if (!track) return;
+
         track.enabled = !track.enabled;
         setMic(track.enabled);
     };
 
-    
-    const endCall = async () => {
-        try {
-            pcRef.current?.close();
-            localStreamRef.current?.getTracks().forEach(t => t.stop());
-            if(remoteVideoRef.current?.srcObject){
-                remoteVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
-                remoteVideoRef.current.srcObject = null;
-            }
+    const toggleCamera = () => {
+        const stream = streamRef.current;
+        if (!stream) return;
 
-            if(roomRefRef.current) await deleteDoc(roomRefRef.current);
+        const track = stream.getVideoTracks()[0];
+        if (!track) return;
 
-            
-            await API.put("/doctor/control/video-call/end", { room_id: roomIdProp });
+        track.enabled = !track.enabled;
+        setCam(track.enabled);
+    };
 
-            toast.info("Онлайн консультацію завершено, статус оновлено");
-            navigate("/staff/video", { replace: true });
-
-        } catch (err) {
-            console.error("Ошибка завершения звонка", err);
-            toast.error("Не удалось завершить консультацию");
-        }
+    const endCall = () => {
+        streamRef.current?.getTracks().forEach(t => t.stop());
+        pc.current?.close();
+        window.location.href = "/";
     };
 
     return (
-        <div className="video-room">
-            <div className={`remote-video-wrapper ${isSpeakingRemote?"speaking":""}`}>
-                <video ref={remoteVideoRef} autoPlay playsInline className="remote-video"/>
-                <div className="username">Пацієнт</div>
+        <div className={styles.room}>
+
+            <div className={styles.remote}>
+                <video
+                    ref={remoteVideo}
+                    autoPlay
+                    playsInline
+                    className={styles.remoteVideo}
+                />
+                <div className={styles.remoteLabel}>
+                    Пацієнт
+                </div>
             </div>
 
-            <div className={`local-video-wrapper ${isSpeakingLocal?"speaking":""}`}>
-                <video ref={localVideoRef} autoPlay playsInline muted/>
-                <div className="username">Ви</div>
+            <div className={styles.local}>
+                <video
+                    ref={localVideo}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={styles.localVideo}
+                />
             </div>
 
             <VideoControls
                 mic={mic}
-                camera={camera}
+                camera={cam}
                 toggleMic={toggleMic}
                 toggleCamera={toggleCamera}
                 endCall={endCall}
             />
 
-            <div className="room-info">{currentTime} | {roomIdProp}</div>
         </div>
     );
 }

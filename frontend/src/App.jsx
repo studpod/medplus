@@ -62,7 +62,23 @@ function AppWrapper() {
         </Router>
     );
 }
+function VideoGate() {
+    const { user, loading } = useAuth();
 
+    const staffUser = JSON.parse(
+        localStorage.getItem("staff_user")
+    );
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!user && !staffUser) {
+        return <Navigate to="/auth" replace />;
+    }
+
+    return <VideoPage />;
+}
 function App() {
     const location = useLocation();
     const { user, setUser } = useAuth();
@@ -126,7 +142,7 @@ function App() {
 
                     <Route
                         path="/patient/video/:room"
-                        element={user || staffUser ? <VideoPage /> : <Navigate to="/auth" />}
+                        element={<VideoGate />}
                     />
 
                     {/* STAFF */}

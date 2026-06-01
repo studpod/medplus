@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class LabsFile extends Model
 {
     protected $fillable = [
-        'lab_id',    // зв’язок з labs_results.id
+        'lab_id',
         'file_path',
         'file_type',
     ];

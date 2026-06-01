@@ -6,8 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Specialization extends Model
 {
-    public function referrals()
-    {
-        return $this->hasMany(Referral::class);
-    }
+    protected $fillable = [
+        'name',
+        'description'
+    ];
+
 }

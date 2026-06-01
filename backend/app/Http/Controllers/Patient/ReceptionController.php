@@ -152,67 +152,37 @@ class ReceptionController extends Controller
             'date'          => 'required|date|after_or_equal:today',
             'time'          => 'required|date_format:H:i',
         ]);
-
         $doctor = Doctor::with('schedules', 'specialization')
             ->findOrFail($validated['doctor_id']);
-
-        /**
-         * =========================
-         * CHECK SCHEDULE
-         * =========================
-         */
         $dayOfWeek = Carbon::parse($validated['date'])->format('l');
-
         $scheduleExists = $doctor->schedules()
             ->where('day_of_week', $dayOfWeek)
             ->where('start_time', '<=', $validated['time'])
             ->where('end_time', '>=', $validated['time'])
             ->exists();
-
         if (!$scheduleExists) {
             return response()->json([
                 'error' => 'Лікар не працює в цей час'
             ], 422);
         }
-
-        /**
-         * =========================
-         * CHECK SLOT
-         * =========================
-         */
         $slotBusy = Appointment::where('doctor_id', $doctor->id)
             ->where('date', $validated['date'])
             ->where('time', $validated['time'])
             ->exists();
-
         if ($slotBusy) {
             return response()->json([
                 'error' => 'Час зайнятий'
             ], 422);
         }
-
-        /**
-         * =========================
-         * SERVICES + ONLINE LOGIC
-         * =========================
-         */
         $services = Service::whereIn('id', $validated['service_ids'])->get();
-
         $isOnline = $services->contains(function ($service) {
             return $service->name === 'Онлайн консультація з сімейним лікарем';
         });
-
         if ($isOnline && $doctor->specialization->name !== 'Сімейний лікар (Терапевт)') {
             return response()->json([
                 'error' => 'Онлайн консультація доступна тільки для сімейного лікаря'
             ], 422);
         }
-
-        /**
-         * =========================
-         * CREATE APPOINTMENT
-         * =========================
-         */
         $appointment = Appointment::create([
             'patient_id' => $patient->id,
             'doctor_id'  => $doctor->id,
@@ -236,33 +206,17 @@ class ReceptionController extends Controller
         ], 201);
     }
     public function addReceptionGuest(Request $request)
-    {
-        $validated = $request->validate([
+    {        $validated = $request->validate([
             'full_name' => 'required|string',
             'phone' => 'required|string',
             'doctor_id' => 'required|exists:doctors,id',
             'service_ids' => 'required|array|min:1',
             'service_ids.*' => 'exists:services,id',
             'date' => 'required|date|after_or_equal:today',
-            'time' => 'required|date_format:H:i',
-        ]);
-
-        /**
-         * =========================
-         * NORMALIZE PHONE
-         * =========================
-         */
+            'time' => 'required|date_format:H:i',        ]);
         $phone = preg_replace('/\D+/', '', $validated['phone']);
-
         if (!str_starts_with($phone, '38')) {
-            $phone = '38' . $phone;
-        }
-
-        /**
-         * =========================
-         * FIND OR CREATE PATIENT
-         * =========================
-         */
+            $phone = '38' . $phone;        }
         $patient = Patient::firstOrCreate(
             ['phone' => $phone],
             [
@@ -272,29 +226,15 @@ class ReceptionController extends Controller
                 'gender'     => 'male',
                 'address'    => 'не вказано',
                 'date_of_birth' => now(),
-            ]
-        );
-
-        /**
-         * =========================
-         * UPDATE NAME IF EMPTY
-         * =========================
-         */
+            ]        );
         if ($patient->last_name === 'не вказано') {
             $parts = explode(' ', $validated['full_name']);
-
             $patient->update([
                 'last_name'   => $parts[0] ?? 'не вказано',
                 'first_name'  => $parts[1] ?? 'не вказано',
                 'middle_name' => $parts[2] ?? 'не вказано',
             ]);
         }
-
-        /**
-         * =========================
-         * CREATE APPOINTMENT
-         * =========================
-         */
         return $this->createAppointment($request, $patient);
     }
 
