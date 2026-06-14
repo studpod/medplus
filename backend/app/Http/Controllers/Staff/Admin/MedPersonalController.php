@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Staff\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Doctor, DoctorSchedules, User};
+use App\Models\{Doctor, DoctorSchedules, User, Receptionist};
 use Illuminate\Support\Facades\DB;
 use Kreait\Firebase\Auth;
 use Kreait\Firebase\Factory;
@@ -170,5 +170,108 @@ class MedPersonalController extends Controller
         Doctor::findOrFail($id)->delete();
 
         return response()->json(['message' => 'deleted']);
+    }
+
+
+    public function getReceptionists(Request $request)
+    {
+        $query = Receptionist::with('user');
+
+        if ($request->search) {
+
+            $query->where(function ($q) use ($request) {
+
+                $q->where(
+                    'first_name',
+                    'like',
+                    "%{$request->search}%"
+                )
+                    ->orWhere(
+                        'last_name',
+                        'like',
+                        "%{$request->search}%"
+                    )
+                    ->orWhere(
+                        'phone',
+                        'like',
+                        "%{$request->search}%"
+                    );
+            });
+        }
+
+        return response()->json([
+            'receptionists' => $query->latest()->get()
+        ]);
+    }
+
+    public function addReceptionist(Request $request)
+    {
+        $request->validate([
+            'firebase_uid' => 'required|string',
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'phone' => 'required|string',
+        ]);
+
+        $existingUser = User::where(
+            'firebase_uid',
+            $request->firebase_uid
+        )->first();
+
+        if ($existingUser) {
+
+            return response()->json([
+                'message' => 'Користувач вже існує'
+            ], 422);
+        }
+
+        $user = User::create([
+            'firebase_uid' => $request->firebase_uid,
+            'role' => 'receptionist'
+        ]);
+
+        $receptionist = Receptionist::create([
+            'user_id' => $user->id,
+
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'middle_name' => $request->middle_name,
+
+            'phone' => $request->phone,
+        ]);
+
+        return response()->json([
+            'message' => 'Працівника реєстратури створено',
+            'receptionist' => $receptionist
+        ]);
+    }
+
+    public function updateReceptionist(
+        Request $request,
+                $id
+    )
+    {
+        $receptionist = Receptionist::findOrFail($id);
+
+        $validated = $request->validate([
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'middle_name' => 'nullable|string',
+            'phone' => 'required|string',
+        ]);
+
+        $receptionist->update($validated);
+
+        return response()->json($receptionist);
+    }
+    public function destroyReceptionist($id)
+    {
+        $receptionist = Receptionist::findOrFail($id);
+
+        $receptionist->delete();
+
+        return response()->json([
+            'message' => 'deleted'
+        ]);
     }
 }

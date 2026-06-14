@@ -25,7 +25,8 @@ export default function AppointmentsChart({ data }) {
 
                     <XAxis dataKey="day" />
 
-                    <YAxis />
+
+                    <YAxis allowDecimals={false}/>
 
                     <Tooltip />
 

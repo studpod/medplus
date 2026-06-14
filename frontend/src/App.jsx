@@ -47,6 +47,8 @@ import ReceptionistSettingsPage from "./Staff/Receptionist/pages/ReceptionistSet
 
 import AdminDashboard from "./Staff/Admin/pages/AdminDashboard";
 import DoctorsPage from "./Staff/Admin/pages/DoctorsPage";
+import ReceptionistsPage from "./Staff/Admin/pages/ReceptionistsPage";
+import ServicesPage from "./Staff/Admin/pages/ServicesPage";
 
 import PrivateRoute from "../src/context/PrivateRoute";
 import RequireProfile from "../src/RequireProfile/RequireProfile"
@@ -180,6 +182,22 @@ function App() {
                         <Route path="/staff/receptionist/settings" element={<ReceptionistSettingsPage />}/>
                         <Route path="/staff/receptionist/patients" element={<ReceptionistPatientsPage />}/>
                         <Route path="doctors" element={<DoctorsPage />} />
+                        <Route
+                            path="receptionists"
+                            element={
+                                staffUser?.role === "admin"
+                                    ? <ReceptionistsPage />
+                                    : <Navigate to="/staff" />
+                            }
+                        />
+                        <Route
+                            path="services"
+                            element={
+                                staffUser?.role === "admin"
+                                    ? <ServicesPage />
+                                    : <Navigate to="/staff" />
+                            }
+                        />
                         <Route
                             path="admin"
                             element={

@@ -132,9 +132,14 @@ export default function StaffSidebar({ user }) {
                 icon: "fas fa-user-md"
             },
             {
-                to: "/staff/receptionist",
+                to: "/staff/receptionists",
                 label: "Реєстратура",
                 icon: "fas fa-notes-medical"
+            },
+            {
+                to: "/staff/services",
+                label: "Послуги",
+                icon: "fas fa-list"
             },
             {
                 to: "/staff/settings",
