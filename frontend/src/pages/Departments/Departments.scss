@@ -1,0 +1,247 @@
+@import '../../styles/variables';
+
+.departments {
+
+  /* HERO */
+  &__hero {
+    padding: 60px 20px;
+    text-align: center;
+    //background-image: url('../../assets/Departments/cardiology.jpg');
+    background: linear-gradient(135deg, #eaf4ff, #f7fbff);
+
+    h1 {
+      font-size: 36px;
+      color: $primary-color;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 18px;
+      color: #555;
+    }
+  }
+
+  /* GRID */
+  &__grid-section {
+    padding: 60px 20px;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 25px;
+  }
+
+  &__card {
+    background: white;
+    border-radius: 14px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    transition: 0.3s ease;
+    position: relative;
+
+    &:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+    }
+
+    h3 {
+      margin: 15px 0 10px;
+      color: $primary-color;
+    }
+
+    p {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+
+    button {
+      background: $accent-color;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+
+      &:hover {
+        background: darken($accent-color, 10%);
+      }
+    }
+  }
+
+  &__icon {
+    font-size: 28px;
+    color: $accent-color;
+    background: rgba($accent-color, 0.1);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+  }
+
+  /* CTA */
+  &__cta {
+    margin-top: 40px;
+    padding: 60px 20px;
+    text-align: center;
+    background: $primary-color;
+    color: white;
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 20px;
+    }
+
+    button {
+      background: white;
+      color: $primary-color;
+      padding: 12px 25px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+
+      &:hover {
+        opacity: 0.9;
+      }
+    }
+  }
+}
+.departments {
+
+  &__actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+}
+
+/* КНОПКИ */
+.btn-primary {
+  background: $accent-color;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+
+  &:hover {
+    background: darken($accent-color, 10%);
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid $primary-color;
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: $primary-color;
+  cursor: pointer;
+  transition: 0.3s;
+
+  &:hover {
+    background: $primary-color;
+    color: white;
+  }
+}
+
+
+/* DETAILS PAGE BLOCKS */
+.department__block {
+  background: white;
+  border-radius: 14px;
+  padding: 30px;
+  margin-bottom: 25px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  transition: 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    transform: translateY(-3px);
+  }
+
+  h2 {
+    font-size: 22px;
+    margin-bottom: 15px;
+    color: $primary-color;
+    position: relative;
+    padding-left: 20px;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 6px;
+      height: 20px;
+      background: $accent-color;
+      border-radius: 4px;
+    }
+  }
+
+  p {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #555;
+    white-space: pre-line;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+
+    li {
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 12px;
+      font-size: 15px;
+      color: #444;
+      line-height: 1.6;
+
+      &::before {
+        content: "✔";
+        position: absolute;
+        left: 0;
+        top: 0;
+        color: $accent-color;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+.department__back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  margin-bottom: 15px;
+
+  span {
+    color: #777;
+  }
+
+  span:first-child {
+    cursor: pointer;
+    color: $primary-color;
+    font-weight: 500;
+    transition: 0.2s;
+
+    &:hover {
+      text-decoration: underline;
+      color: darken($primary-color, 10%);
+    }
+  }
+}

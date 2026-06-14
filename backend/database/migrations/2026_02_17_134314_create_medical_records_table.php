@@ -15,13 +15,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('appointment_id')->constrained('appointments')->onDelete('cascade');
             $table->string('chief_complaint');
+            $table->string('anamnesis');
+            $table->string('initial_review')->nullable();
             $table->text('diagnosis')->nullable();
             $table->text('treatment')->nullable();
             $table->string('prescriptions')->nullable();
             $table->text('notes');
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
-//            $table->enum('status', ['active', 'recovered', 'chronic'])->default('active');
             $table->timestamps();
         });
     }

@@ -11,11 +11,16 @@ class Service extends Model
         'description',
         'price',
         'doctor_id',
-        'type'
+        'type',
+        'specialization_id'
     ];
    public $timestamps = false;
     public function doctor()
     {
         return $this->belongsTo(Doctor::class);
+    }
+    public function labs()
+    {
+        return $this->hasMany(LabsResult::class);
     }
 }

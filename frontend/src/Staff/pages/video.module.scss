@@ -1,0 +1,101 @@
+.onlinePage {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.videoTable {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  align-items: center;
+  background: #fff;
+  padding: 15px 16px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  transition: 0.2s;
+}
+
+.tableRow:hover {
+  transform: translateY(-2px);
+}
+
+.patient {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: #eef3ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.time {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.status {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.expected {
+  background: #fff4e5;
+  color: #ff9800;
+}
+
+.done {
+  background: #e6f7ec;
+  color: #2e9d57;
+}
+
+.cancel {
+  background: #fdecea;
+  color: #d32f2f;
+}
+
+.startBtn {
+  background: linear-gradient(135deg, #4f6ef7, #6c8cff);
+  color: white;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.startBtn:hover {
+  transform: scale(1.05);
+}
+
+.emptyState {
+  text-align: center;
+  margin-top: 40px;
+  color: #888;
+}

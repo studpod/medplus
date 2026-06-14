@@ -1,0 +1,152 @@
+/* ===== APPOINTMENTS NEW UI ===== */
+
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* CARD */
+
+.appointment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: white;
+  border-radius: 16px;
+  padding: 20px 22px;
+
+  border: 1px solid #eef2f6;
+  transition: 0.25s ease;
+}
+
+.appointment-item:hover {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
+}
+
+/* LEFT SIDE */
+
+.appointment-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.doctor {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* DATE TIME */
+
+.datetime {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.dot {
+  font-size: 12px;
+}
+
+/* META */
+
+.meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* TYPE */
+
+.type {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.type.online {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.type.offline {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* STATUS */
+
+.status {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.status.expected {
+  background: #fef3c7;
+  color: #d97706;
+}
+.status.no_show {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+.status.completed {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status.cancelled {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* RIGHT */
+
+.appointment-right {
+  display: flex;
+  align-items: center;
+}
+
+/* BUTTON */
+
+.join-btn {
+  background: linear-gradient(135deg, #00bfa6, #00d1b2);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.join-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 191, 166, 0.3);
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+  .appointment-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .appointment-right {
+    width: 100%;
+  }
+
+  .join-btn {
+    width: 100%;
+  }
+}

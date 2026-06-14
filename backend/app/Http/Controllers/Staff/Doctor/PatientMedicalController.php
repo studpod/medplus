@@ -4,12 +4,154 @@ namespace App\Http\Controllers\Staff\Doctor;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Patient, Doctor, Appointment, MedicalRecord};
+use Illuminate\Support\Facades\Cache;
+use Kreait\Firebase\Factory;
+use App\Models\{Patient, Doctor, Appointment, MedicalRecord, AppointmentStatusLog, };
 use Illuminate\Support\Facades\Auth;
 
 class PatientMedicalController extends Controller
 {
+
+    public function viewMedicalCard($patientId)
+    {
+        $user = auth()->user();
+        if ($user->role !== 'doctor') {
+            return response()->json(['error' => 'Доступ дозволено тільки лікарям'], 403);
+        }
+        $doctor = $user->doctor()->with('specialization')->first();
+        if (!$doctor) {
+            return response()->json(['error' => 'Профіль лікаря не знайдено'], 404);
+        }
+        $patient = Patient::with(['user', 'doctor.specialization'])->findOrFail($patientId);
+        $isFamilyDoctor = $patient->doctor_id === $doctor->id;
+        $hasAppointment = Appointment::where('patient_id', $patientId)
+            ->where('doctor_id', $doctor->id)
+            ->exists();
+        if (!$isFamilyDoctor && !$hasAppointment) {
+            return response()->json(['error' => 'Немає доступу до цього пацієнта'], 403);
+        }
+        $email = null;
+        if ($patient->user && $patient->user->firebase_uid) {
+            try {
+                $factory = (new Factory)
+                    ->withServiceAccount(storage_path('/firebase/medplus-auth-fb352-firebase-adminsdk-fbsvc-9dc637fc58.json'));
+                $auth = $factory->createAuth();
+                $firebaseUser = $auth->getUser($patient->user->firebase_uid);
+                $email = $firebaseUser->email;
+            } catch (\Exception $e) {
+                \Log::error("Firebase error: " . $e->getMessage());
+            }
+        }
+        $appointmentsQuery = Appointment::with([
+            'doctor.specialization',
+            'medicalRecord',
+            'appointmentServices.service',
+        ])
+            ->where('patient_id', $patientId);
+        if (!$isFamilyDoctor) {
+            $appointmentsQuery->where('doctor_id', $doctor->id);
+        }
+        $appointments = $appointmentsQuery
+            ->whereHas('medicalRecord')
+            ->orderBy('date', 'desc')
+            ->get();
+        return response()->json([
+            'patient' => [
+                'id' => $patient->id,
+                'first_name' => $patient->first_name,
+                'last_name' => $patient->last_name,
+                'middle_name' => $patient->middle_name,
+                'date_of_birth' => $patient->date_of_birth,
+                'gender' => $patient->gender,
+                'phone' => $patient->phone,
+                'email' => $email,
+                'address' => $patient->address,
+                'notes' => $patient->notes,
+                'family_doctor' => $patient->doctor ? [
+                    'first_name' => $patient->doctor->first_name,
+                    'last_name' => $patient->doctor->last_name,
+                    'middle_name' => $patient->doctor->middle_name,
+                    'specialization' => $patient->doctor->specialization->name ?? null
+                ] : null
+            ],
+            'appointments' => $appointments
+        ]);
+    }
     public function addMedicalCard(Request $request, $patientId)
+    {
+        $user = Auth::user();
+
+        if (!$user || $user->role !== 'doctor') {
+            return response()->json(['error' => 'Доступ дозволений лише лікарям'], 403);
+        }
+
+        $doctor = Doctor::where('user_id', $user->id)->first();
+        if (!$doctor) {
+            return response()->json(['error' => 'Профіль лікаря не знайдений'], 404);
+        }
+
+        $validated = $request->validate([
+            'appointment_id'  => 'required|exists:appointments,id',
+            'chief_complaint' => 'required|string',
+            'initial_review' => 'required|string',
+            'anamnesis'       => 'required|string',
+            'diagnosis'       => 'required|string',
+            'treatment'       => 'required|string',
+            'prescriptions'   => 'nullable|string',
+            'notes'           => 'nullable|string',
+        ]);
+        $patient = Patient::find($patientId);
+        if (!$patient) {
+            return response()->json(['error' => 'Пацієнт не знайдений'], 404);
+        }
+        $appointment = Appointment::where('id', $validated['appointment_id'])
+            ->where('patient_id', $patient->id)
+            ->first();
+
+        if (!$appointment) {
+            return response()->json(['error' => 'Прийом не знайдено для цього пацієнта'], 404);
+        }
+
+
+//        if ($doctor->specialization->name === 'Сімейний лікар') {
+//            if ($patient->doctor_id !== $doctor->id) {
+//                return response()->json(['error' => 'Цей пацієнт не закріплений за вами'], 403);
+//            }
+//        } else {
+//            if ($appointment->doctor_id !== $doctor->id) {
+//                return response()->json(['error' => 'Ви не можете додавати записи до цього прийому'], 403);
+//            }
+//        }
+
+        $existingRecord = MedicalRecord::where('appointment_id', $appointment->id)->first();
+        if ($existingRecord) {
+            return response()->json([
+                'error' => 'Для цього прийому вже існує запис у медичній картці'
+            ], 400);
+        }
+        $medicalRecord = MedicalRecord::create([
+            'appointment_id' => $appointment->id,
+            'chief_complaint' => $validated['chief_complaint'],
+            'anamnesis' => $validated['anamnesis'] ?? null,
+            'initial_review' => $validated['initial_review'],
+            'diagnosis' => $validated['diagnosis'],
+            'treatment' => $validated['treatment'],
+            'prescriptions' => $validated['prescriptions'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        Cache::forget("doctor:{$doctor->id}:patient:{$patientId}:medical-card");
+        Cache::forget("doctor:{$doctor->id}:appointments");
+
+        return response()->json([
+            'message' => 'Запис у медичну карту успішно створено, статус прийому оновлено',
+            'medical_record' => $medicalRecord,
+            'appointment' => $appointment,
+            'logs' => $appointment->statusLogs()->with('user')->get()
+        ], 201);
+    }
+
+    public function updateMedicalCard(Request $request, $patientId, $recordId)
     {
         $user = Auth::user();
 
@@ -19,7 +161,6 @@ class PatientMedicalController extends Controller
             ], 403);
         }
 
-        // user_id лікаря
         $doctor = Doctor::where('user_id', $user->id)->first();
 
         if (!$doctor) {
@@ -28,70 +169,116 @@ class PatientMedicalController extends Controller
             ], 404);
         }
 
-        // Валідація
+        $record = MedicalRecord::with('appointment')->find($recordId);
+
+        if (!$record) {
+            return response()->json([
+                'error' => 'Запис медичної карти не знайдений'
+            ], 404);
+        }
+
+        if (!$record->appointment) {
+            return response()->json([
+                'error' => 'Прийом не знайдений'
+            ], 404);
+        }
+
+
+        if ($record->appointment->doctor_id !== $doctor->id) {
+            return response()->json([
+                'error' => 'Ви можете редагувати лише власні записи'
+            ], 403);
+        }
+
         $validated = $request->validate([
-            'appointment_id'     => 'required|exists:appointments,id',
-            'chief_complaint'  => 'required|string',
-            'diagnosis'        => 'required|string',
-            'treatment'        => 'required|string',
-            'prescriptions'    => 'nullable|string',
-            'notes'            => 'nullable|string',
-            'start_date'       => 'nullable|date',
-            'end_date'         => 'nullable|date|after_or_equal:start_date',
+            'chief_complaint' => 'required|string',
+            'anamnesis'       => 'nullable|string',
+            'initial_review'  => 'nullable|string',
+            'diagnosis'       => 'required|string',
+            'treatment'       => 'required|string',
+            'prescriptions'   => 'nullable|string',
+            'notes'           => 'nullable|string',
         ]);
 
-        // пошук пацієнта
-        $patient = Patient::find($patientId);
-        if (!$patient) {
-            return response()->json([
-                'error' => 'Пацієнт не знайдений'
-            ], 404);
-        }
-
-        // пошук прийому
-        $appointment = Appointment::where('id', $validated['appointment_id'])
-            ->where('patient_id', $patient->id)
-            ->first();
-
-        if (!$appointment) {
-            return response()->json([
-                'error' => 'Прийом не знайдено для цього пацієнта'
-            ], 404);
-        }
-
-        // перевірка прав лікаря
-        // Якщо сімейний лікар
-        if ($doctor->specialization->name === 'Сімейний лікар') {
-            if ($patient->doctor_id !== $doctor->id) {
-                return response()->json([
-                    'error' => 'Цей пацієнт не закріплений за вами'
-                ], 403);
-            }
-        } else {
-            // Спеціаліст може додавати записи тільки якщо він прив'язаний до цього прийому
-            if ($appointment->doctor_id !== $doctor->id) {
-                return response()->json([
-                    'error' => 'Ви не можете додавати записи до цього прийому'
-                ], 403);
-            }
-        }
-
-
-        $medicalRecord = MedicalRecord::create([
-            'appointment_id'     => $appointment->id,
-            'chief_complaint'  => $validated['chief_complaint'],
-            'diagnosis'        => $validated['diagnosis'],
-            'treatment'        => $validated['treatment'],
-            'prescriptions'    => $validated['prescriptions'] ?? null,
-            'notes'            => $validated['notes'] ?? null,
-            'start_date'       => $validated['start_date'] ?? now(),
-            'end_date'         => $validated['end_date'] ?? null,
-//            'status'           => 'active',
-        ]);
+        $record->update($validated);
 
         return response()->json([
-            'message' => 'Запис у медичну карту успішно створено',
-            'medical_record' => $medicalRecord
-        ], 201);
+            'message' => 'Запис медичної карти оновлено',
+            'medical_record' => $record
+        ]);
+    }
+
+    public function updateMedicalRecord(Request $request, $patientId, $id)
+    {
+        $record = MedicalRecord::where('id', $id)
+            ->whereHas('appointment', function ($q) use ($patientId) {
+                $q->where('patient_id', $patientId);
+            })
+            ->first();
+
+        if (!$record) {
+            return response()->json(['error' => 'Запис не знайдено'], 404);
+        }
+
+
+        $validated = $request->validate([
+            'chief_complaint' => 'nullable|string|max:2000',
+            'anamnesis' => 'nullable|string|max:3000',
+            'initial_review' => 'nullable|string|max:2000',
+            'diagnosis' => 'nullable|string|max:2000',
+            'treatment' => 'nullable|string|max:3000',
+            'prescriptions' => 'nullable|string|max:3000',
+            'notes' => 'nullable|string|max:3000',
+        ], [
+            'string' => 'Поле :attribute має бути текстом',
+            'max' => 'Поле :attribute занадто довге (макс :max символів)'
+        ]);
+
+        $record->update($validated);
+
+        return response()->json(['message' => 'Оновлено']);
+    }
+    public function updateDiagnostic(Request $request, $id)
+    {
+        $report = DiagnosticReport::find($id);
+
+        if (!$report) {
+            return response()->json(['error' => 'Не знайдено'], 404);
+        }
+
+        $validated = $request->validate([
+            'description' => 'nullable|string|max:3000',
+            'results' => 'nullable|string|max:5000',
+            'conclusion' => 'nullable|string|max:3000',
+            'recommendations' => 'nullable|string|max:3000',
+
+            'files' => 'nullable|array',
+            'files.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB
+        ], [
+            'files.*.mimes' => 'Дозволені формати: jpg, jpeg, png, pdf',
+            'files.*.max' => 'Файл не більше 5MB',
+        ]);
+
+        $report->update([
+            'description' => $validated['description'] ?? null,
+            'results' => $validated['results'] ?? null,
+            'conclusion' => $validated['conclusion'] ?? null,
+            'recommendations' => $validated['recommendations'] ?? null,
+        ]);
+
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+
+                $path = $file->store('diagnostics', 'public');
+
+                DiagnosticFile::create([
+                    'diagnostic_report_id' => $report->id,
+                    'file_path' => $path,
+                    'file_type' => $file->getClientOriginalExtension()
+                ]);
+            }
+        }
+
+        return response()->json(['message' => 'Оновлено']);
     }
 }

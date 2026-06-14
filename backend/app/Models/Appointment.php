@@ -13,23 +13,37 @@ class Appointment extends Model
         'date',
         'time',
         'status',
+        'is_online',
+        'has_referral'
+
         ];
     public function patient()
     {
         return $this->belongsTo(Patient::class);
     }
-
     public function doctor()
     {
         return $this->belongsTo(Doctor::class);
     }
-
     public function medicalRecord()
     {
         return $this->hasOne(MedicalRecord::class);
     }
-    public function labResults()
+    public function appointmentServices()
     {
-        return $this->hasMany(LabResult::class);
+        return $this->hasMany(AppointmentService::class);
+    }
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'appointment_services', 'appointment_id', 'service_id')
+            ->withPivot('price');
+    }
+    public function statusLogs()
+    {
+        return $this->hasMany(AppointmentStatusLog::class);
+    }
+    public function videoCall()
+    {
+        return $this->hasOne(VideoCall::class);
     }
 }

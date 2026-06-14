@@ -9,6 +9,8 @@ class MedicalRecord extends Model
     protected $fillable = [
         'appointment_id',
         'chief_complaint',
+        'anamnesis',
+        'initial_review',
         'diagnosis',
         'treatment',
         'prescriptions',
@@ -21,8 +23,17 @@ class MedicalRecord extends Model
     {
         return $this->belongsTo(Appointment::class);
     }
+
     public function labsResults()
     {
-        return $this->hasMany(LabsResult::class);
+        return $this->hasManyThrough(
+            LabsResult::class,
+            AppointmentService::class,
+            'appointment_id',
+            'appointment_service_id',
+            'appointment_id',
+            'id'
+        )->with('labsFiles');
     }
+
 }

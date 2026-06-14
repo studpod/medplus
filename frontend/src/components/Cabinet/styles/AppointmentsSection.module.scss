@@ -1,0 +1,161 @@
+.appointmentsSection {
+  max-width: 900px;
+  margin: 40px auto;
+}
+
+.sectionTitle {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  border-left: 4px solid #00bfa6;
+  padding-left: 12px;
+}
+
+.appointmentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* CARD */
+.appointmentItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: white;
+  border-radius: 16px;
+  padding: 20px 22px;
+
+  border: 1px solid #eef2f6;
+  transition: 0.25s ease;
+}
+
+.appointmentItem:hover {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
+}
+
+/* LEFT */
+.appointmentLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.specialization {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* DATE */
+.datetime {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.dot {
+  font-size: 12px;
+}
+
+/* TYPE */
+.type {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+.online {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.offline {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* STATUS */
+.expected {
+  background: #fef3c7;
+  color: #d97706;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.completed {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.cancelled {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.noShow {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* SERVICES */
+.services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.serviceTag {
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+/* RIGHT */
+.appointmentRight {
+  display: flex;
+  align-items: center;
+}
+
+.joinBtn {
+  background: linear-gradient(135deg, #00bfa6, #00d1b2);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.joinBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 191, 166, 0.3);
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .appointmentItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .appointmentRight {
+    width: 100%;
+  }
+
+  .joinBtn {
+    width: 100%;
+  }
+}

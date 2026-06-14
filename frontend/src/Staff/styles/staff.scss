@@ -1,0 +1,235 @@
+/* ======================== */
+/* Staff Layout & Sidebar   */
+/* ======================== */
+
+.staff-layout {
+  display: flex;
+  height: 100vh;
+  font-family: "Inter", sans-serif;
+}
+
+.staff-sidebar {
+  width: 250px;
+  background: #1f2a38;
+  color: white;
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: width 0.3s ease;
+
+  &.collapsed {
+    width: 70px;
+    padding: 20px 10px;
+  }
+
+  .staff-logo {
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 40px;
+    letter-spacing: 1px;
+  }
+
+  .collapse-btn {
+    position: absolute;
+    top: 20px;
+    right: -20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #ff6b6b;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    transition: all 0.3s;
+
+    i {
+      transition: transform 0.3s;
+    }
+
+    &:hover {
+      background: #ff4c4c;
+    }
+  }
+
+  nav {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 15px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-weight: 500;
+      transition: background 0.3s, transform 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      &.active,
+      &:hover {
+        background: #3a4a5a;
+        transform: translateX(5px);
+      }
+
+      i {
+        min-width: 20px;
+        text-align: center;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+/* ======================== */
+/* Staff Main & Header      */
+/* ======================== */
+
+.staff-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.staff-header {
+  height: 70px;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 25px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+
+  .staff-header-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2a38;
+  }
+
+  .staff-user {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    span {
+      font-weight: 500;
+      color: #1f2a38;
+    }
+
+    button {
+      background: #ff6b6b;
+      border: none;
+      padding: 8px 12px;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+
+      &:hover {
+        background: #ff4c4c;
+      }
+    }
+  }
+}
+
+/* ======================== */
+/* Staff Content & Cards    */
+/* ======================== */
+
+.staff-content {
+  padding: 25px;
+  flex: 1;
+  overflow-y: auto;
+  background: #f0f2f5;
+}
+
+.dashboard-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+
+  .card {
+    flex: 1 1 200px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    transition: transform 0.3s, box-shadow 0.3s;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+
+    h3 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f2a38;
+    }
+  }
+}
+
+/* ======================== */
+/* Dashboard Block          */
+/* ======================== */
+
+.staff-dashboard {
+  flex: 1;
+  background: #f0f2f5;
+}
+
+/* ======================== */
+/* Mobile Responsive        */
+/* ======================== */
+
+@media(max-width:768px) {
+
+  .staff-layout {
+    flex-direction: column;
+  }
+
+  .staff-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 10px;
+  }
+
+  .staff-sidebar.collapsed {
+    width: 100%;
+  }
+
+  .staff-sidebar nav {
+    flex-direction: row;
+    gap: 10px;
+    margin-top: 0;
+  }
+
+  .dashboard-cards {
+    justify-content: center;
+  }
+
+  .collapse-btn {
+    top: 10px;
+    right: 10px;
+  }
+
+}

@@ -1,0 +1,137 @@
+@import '../../styles/variables';
+
+.cabinetPage {
+  display: flex;
+  flex-direction: column;
+  background-color: #f7f8fb;
+  min-height: calc(100vh - 70px);
+
+  .cabinetContent {
+    padding: 40px 20px;
+    background-color: #f7f8fb;
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .profileCard {
+    max-width: 700px;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 40px;
+    margin: 0 auto;
+    transition: 0.3s;
+  }
+
+  .profileHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1f2937;
+      border-left: 4px solid #00bfa6;
+      padding-left: 15px;
+    }
+  }
+
+  .editBtn {
+    background: rgba(0, 191, 166, 0.1);
+    color: #00bfa6;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+
+    &:hover {
+      background: #00bfa6;
+      color: white;
+    }
+  }
+
+  .infoRow {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid #f1f3f6;
+  }
+
+  .saveBtn {
+    background: linear-gradient(90deg, #00bfa6, #00d1b2);
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 12px;
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  .cabinetTabs {
+    position: sticky;
+    top: 70px;
+    z-index: 90;
+
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+
+    padding: 12px;
+    background: white;
+    border-bottom: 1px solid #eee;
+  }
+
+  .tabBtn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    background: #f3f4f6;
+    cursor: pointer;
+
+    &.active {
+      background: #00bfa6;
+      color: white;
+    }
+  }
+
+  .appointmentsSection {
+    max-width: 900px;
+    margin: 40px auto;
+  }
+
+  .appointmentItem {
+    display: flex;
+    justify-content: space-between;
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #eef2f6;
+  }
+
+  .joinBtn {
+    background: linear-gradient(135deg, #00bfa6, #00d1b2);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .labsPage {
+    max-width: 900px;
+    margin-left: auto;
+  }
+
+  .labCard {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid #eef2f6;
+  }
+}

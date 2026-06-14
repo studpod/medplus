@@ -1,0 +1,229 @@
+@import '../styles/variables';
+
+.home {
+  //padding-top: 70px;
+}
+
+/* HERO */
+.hero {
+  position: relative;
+  height: 75vh;
+  background-image: url('../assets/Home/doctorHome.png');
+  background-size: cover;
+  background-position: 50% 10%;
+  background-repeat: no-repeat;
+
+  &__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    height: 100%;
+    padding: 0 20px;
+  }
+
+  &__text {
+    max-width: 550px;
+
+    h1 {
+      font-size: 42px;
+      margin-bottom: 20px;
+      line-height: 1.2;
+      color: #0e4779;
+    }
+
+    p {
+      font-size: 18px;
+      margin-bottom: 30px;
+      color: #0b497c;
+    }
+  }
+
+  &__btn {
+    background-color: $accent-color;
+    color: white;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: 0.3s ease;
+
+    &:hover {
+      background-color: darken($accent-color, 8%);
+    }
+  }
+
+  &__image img {
+    width: 450px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+}
+
+/* ABOUT (новий блок з двома колонками) */
+.about {
+  padding: 80px 20px;
+  background-color: #f7f8fb;
+
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  &__image img {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+
+  &__text {
+    flex: 1;
+    min-width: 300px;
+
+    h2 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      color: $primary-color;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.8;
+      margin-bottom: 20px;
+      color: #555;
+    }
+
+    &__advantages {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 30px;
+
+      li {
+        position: relative;
+        padding-left: 25px;
+        margin-bottom: 15px;
+        font-size: 16px;
+        color: #333;
+
+        &::before {
+          content: "✔";
+          position: absolute;
+          left: 0;
+          color: $primary-color;
+        }
+      }
+    }
+
+    .hero__btn {
+      padding: 12px 28px;
+      font-size: 16px;
+      border-radius: 8px;
+    }
+  }
+}
+
+/* ADVANTAGES SECTION */
+.advantages {
+  padding: 80px 0;
+  background-color: #f9f9f9;
+
+  h2 {
+    font-size: 32px;
+    margin-bottom: 40px;
+    text-align: center;
+    color: $primary-color;
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: center;
+  }
+
+  &__item {
+    background-color: white;
+    border-radius: 12px;
+    padding: 30px 20px;
+    width: 220px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+
+      .advantages__btn {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: $primary-color;
+    }
+
+    p {
+      font-size: 16px;
+      color: #555;
+      min-height: 50px;
+    }
+
+    .advantages__btn {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 14px;
+      background-color: $accent-color;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 0.3s ease;
+    }
+  }
+}
+
+
+@media (max-width: 992px) {
+  .hero__content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero__image img {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .about__content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .about__text {
+    &__advantages li::before {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+
+  .advantages__list {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .advantages__item {
+    width: 100%;
+    max-width: 400px;
+  }
+}

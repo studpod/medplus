@@ -19,6 +19,7 @@ class User extends Authenticatable implements JWTSubject
      * @var list<string>
      */
     protected $fillable = [
+        'firebase_uid',
         'email',
         'password',
         'role',
@@ -70,5 +71,10 @@ class User extends Authenticatable implements JWTSubject
     public function doctor()
     {
         return $this->hasOne(Doctor::class);
+    }
+
+    public function receptionist()
+    {
+        return $this->hasOne(Receptionist::class);
     }
 }
